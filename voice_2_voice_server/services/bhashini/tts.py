@@ -14,6 +14,7 @@ from pipecat.frames.frames import (
 )
 from pipecat.services.tts_service import TTSService
 
+from loguru import logger
 
 class BhashiniTTSService(TTSService):
 
@@ -86,6 +87,7 @@ class BhashiniTTSService(TTSService):
                             break
 
                         if "audio" in data:
+                            logger.info(f"Audio chunk sent to Telephony: {len(base64.b64decode(data['audio']))} bytes")
                             yield TTSAudioRawFrame(
                                 audio=base64.b64decode(data["audio"]),
                                 sample_rate=data.get("sample_rate", self.sample_rate),

@@ -38,7 +38,6 @@ class IndicParlerRESTTTSService(TTSService):
         self._play_steps_in_s = play_steps_in_s
 
     async def run_tts(self, text: str) -> AsyncGenerator[Frame, None]:
-        logger.info(f"Running TTS for text: {text}")
         if not text.strip():
             return
 
@@ -82,7 +81,7 @@ class IndicParlerRESTTTSService(TTSService):
                             break
 
                         if "audio" in data:
-                            logger.info(f"Audio chunk going out")
+                            logger.info(f"Audio chunk sent to Telephony: {len(base64.b64decode(data['audio']))} bytes")
                             yield TTSAudioRawFrame(
                                 audio=base64.b64decode(data["audio"]),
                                 sample_rate=data.get("sample_rate", self.sample_rate),

@@ -174,7 +174,7 @@ async def bot(
     vad_analyzer = SileroVADAnalyzer(
         sample_rate=sample_rate,
         params=VADParams(
-            stop_secs=0.6,
+            stop_secs=0.3,
             min_volume=0.5,
             confidence=0.6,
         )

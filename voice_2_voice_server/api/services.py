@@ -53,7 +53,7 @@ def create_llm_service(llm_config: dict) -> Any:
     if provider == "OpenAI":
         # Extract user aggregator params from config, with defaults
         user_aggregator_params = LLMUserAggregatorParams(
-            aggregation_timeout=args.get("aggregation_timeout", 0.1)
+            aggregation_timeout=args.get("aggregation_timeout", 0.05)
         )
         
         service = OpenAILLMService(
