@@ -1,3 +1,15 @@
 __pycache__/
 *.pyc
 *.pyo
+/site
+/voicera_frontend/.env.*
+DOCS_MANIFEST.txt
+docs/architecture.md
+docs/architecture.png
+docs/C4.png
+docs/container.png
+docs/deploy.png
+docs/getting-started.md
+docs/how-to-use-docs.md
+docs/index.md
+docs/sequence.png
