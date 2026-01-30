@@ -8,27 +8,7 @@ The "10,000-foot view" showing VoiceERA's interactions with users and external s
 
 ### Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                          VoiceERA System                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Voice Agents Platform for Telephony Integration                │
-│  - Real-time voice processing                                   │
-│  - LLM-powered conversations                                    │
-│  - Multi-language support                                       │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-         │                                    │
-         ▼                                    ▼
-    ┌──────────┐                    ┌──────────────────┐
-    │   Users  │                    │  AI Providers    │
-    │ (Phone)  │                    │  - OpenAI        │
-    └──────────┘                    │  - Deepgram      │
-                                    │  - Cartesia      │
-                                    │  - Google Cloud  │
-                                    └──────────────────┘
-```
+![Level1](../assets/lvl2.png)
 
 ### Key Actors
 
@@ -44,46 +24,7 @@ The "10,000-foot view" showing VoiceERA's interactions with users and external s
 Zooming in to show the major technology choices and inter-service communication.
 
 ### Architecture Components
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      VoiceERA Platform                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐         ┌──────────────┐         ┌─────────┐  │
-│  │   Frontend   │◄───────►│   Backend    │◄───────►│ MongoDB │  │
-│  │   (Next.js)  │ REST    │  (FastAPI)   │ Query   │         │  │
-│  │   Port 3000  │◄────┐   │  Port 8000   │         └─────────┘  │
-│  └──────────────┘     │   └──────────────┘               ▲      │
-│         ▲             │          ▲                       │      │
-│         │             │          │                   ┌───────┐  │
-│         │        WebSocket      │                   │ MinIO  │  │
-│         │          Connection    └──────────────────►│       │  │
-│         │             │                              │S3     │  │
-│         │             ▼                              │:9000  │  │
-│         │   ┌──────────────────┐                     └───────┘  │
-│         │   │  Voice Server    │                                │
-│         │   │   (Pipecat)      │                                │
-│         └──►│  Port 7860       │                                │
-│             │                  │                                │
-│             │  - STT Processing │                               │
-│             │  - LLM Calls      │                               │
-│             │  - TTS Synthesis  │                               │
-│             └──────────────────┘                                │ 
-│                   │                                             │
-│                   │                                             │
-│             ┌─────┴────────────────────────────┐                │
-│             │                                  │                │
-│             ▼                                  ▼                │
-│      ┌──────────────┐             ┌──────────────────┐          │
-│      │ AI4Bharat    │             │ External AI      │          │
-│      │ Services     │             │ - OpenAI         │          │
-│      │ (Optional)   │             │ - Deepgram       │          │
-│      └──────────────┘             │ - Cartesia       │          │
-│                                   │ - Google Cloud   │          │
-│                                   └──────────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
-```
+![Level2](../assets/lvl1.png)
 
 ### Service Responsibilities
 
@@ -186,26 +127,7 @@ Backend ───write────► MongoDB
 
 Each service runs in its own container:
 
-```
-┌──────────────────────────────────┐
-│     voicera_network (Docker)     │
-├──────────────────────────────────┤
-│ ┌────────────┐ ┌─────────────┐   │
-│ │  Frontend  │ │   Backend   │   │ 
-│ │  Container │ │  Container  │   │
-│ └────────────┘ └─────────────┘   │
-│ ┌──────────────────────────────┐ │
-│ │   Voice Server Container     │ │
-│ └──────────────────────────────┘ │
-│ ┌────────────┐ ┌─────────────┐   │
-│ │  MongoDB   │ │    MinIO    │   │
-│ │ Container  │ │ Container   │   │
-│ └────────────┘ └─────────────┘   │
-└──────────────────────────────────┘
-        │
-        ▼
-   docker-compose (Orchestration)
-```
+![docker containers](../assets/docker.png)
 
 ### Volume Mounts
 
