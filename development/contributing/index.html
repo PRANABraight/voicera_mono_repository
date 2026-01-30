@@ -1,0 +1,2501 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A complete voice AI platform with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.">
+      
+      
+        <meta name="author" content="VoiceERA Team">
+      
+      
+        <link rel="canonical" href="https://voicera-docs.example.com/development/contributing/">
+      
+      
+        <link rel="prev" href="../local-setup/">
+      
+      
+        <link rel="next" href="../testing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Contributing - VoiceERA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#contributing-to-voiceera" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="VoiceERA Documentation" class="md-header__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            VoiceERA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Contributing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="light" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../services/backend/" class="md-tabs__link">
+          
+  
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/rest-api/" class="md-tabs__link">
+          
+  
+  
+  API Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../local-setup/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="VoiceERA Documentation" class="md-nav__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    VoiceERA Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/system-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Services
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/voice-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Voice Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-stt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat STT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-tts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat TTS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/websocket-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WebSocket API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../local-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#code-of-conduct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code of Conduct
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Process
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-before-you-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Before You Start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Code Style
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Code Style">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#javascripttypescript" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JavaScript/TypeScript
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Commit Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Pull Request
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Pull Request">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create PR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr-review-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Review Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Code Review
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-architecture-decision-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR (Architecture Decision Records)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#voice-server-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Voice Server Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#security-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporting-security-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Security Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Guidelines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-standards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation Standards
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation Standards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-comments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Comments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readme-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        README Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Process
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Useful Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thank-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thank You!
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="contributing-to-voiceera">Contributing to VoiceERA<a class="headerlink" href="#contributing-to-voiceera" title="Permanent link">&para;</a></h1>
+<p>Guidelines for contributing to VoiceERA.</p>
+<h2 id="code-of-conduct">Code of Conduct<a class="headerlink" href="#code-of-conduct" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Be respectful and inclusive</li>
+<li>No harassment or discrimination</li>
+<li>Provide constructive feedback</li>
+<li>Help others learn and improve</li>
+</ul>
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Fork the repository</strong>
+   <div class="highlight"><pre><span></span><code><span class="c1"># Go to https://github.com/voicera/voicera_mono_repository</span>
+<span class="c1"># Click &quot;Fork&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Clone your fork</strong>
+   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-username/voicera_mono_repository.git
+<span class="nb">cd</span><span class="w"> </span>voicera_mono_repository
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Set up development environment</strong>
+   <div class="highlight"><pre><span></span><code><span class="c1"># See Local Development Setup</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Create a branch</strong>
+   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/your-feature
+</code></pre></div></p>
+</li>
+</ol>
+<h2 id="development-process">Development Process<a class="headerlink" href="#development-process" title="Permanent link">&para;</a></h2>
+<h3 id="1-before-you-start">1. Before You Start<a class="headerlink" href="#1-before-you-start" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Check <a href="https://github.com/voicera/voicera_mono_repository/issues">Issues</a> for existing work</li>
+<li>Create an issue for new features</li>
+<li>Discuss major changes in issues first</li>
+<li>Follow the <a href="roadmap.md">Roadmap</a> for planned features</li>
+</ul>
+<h3 id="2-code-style">2. Code Style<a class="headerlink" href="#2-code-style" title="Permanent link">&para;</a></h3>
+<h4 id="python">Python<a class="headerlink" href="#python" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Follow PEP 8</span>
+<span class="c1"># Use type hints</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_statistics</span><span class="p">(</span>
+    <span class="n">call_logs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CallLog</span><span class="p">],</span>
+    <span class="n">filter_date</span><span class="p">:</span> <span class="n">datetime</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate statistics from call logs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        call_logs: List of call logs to analyze</span>
+<span class="sd">        filter_date: Date filter for logs</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionary with statistics</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">total_calls</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">call_logs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">total_calls</span><span class="p">}</span>
+
+<span class="c1"># Use meaningful names</span>
+<span class="n">agent_name</span> <span class="o">=</span> <span class="s2">&quot;Customer Support Bot&quot;</span>  <span class="c1"># Good</span>
+<span class="n">x</span> <span class="o">=</span> <span class="s2">&quot;Customer Support Bot&quot;</span>  <span class="c1"># Bad</span>
+
+<span class="c1"># Add docstrings to all functions</span>
+</code></pre></div>
+<p>Format with:
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>black<span class="w"> </span>isort
+black<span class="w"> </span>.
+isort<span class="w"> </span>.
+</code></pre></div></p>
+<h4 id="javascripttypescript">JavaScript/TypeScript<a class="headerlink" href="#javascripttypescript" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// Use TypeScript for type safety</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Agent</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="kt">AgentConfig</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Use const and let, not var</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">agentName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Support Bot&quot;</span><span class="p">;</span>
+
+<span class="c1">// Use arrow functions</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">processCall</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">callId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">CallResult</span><span class="o">&gt;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">};</span>
+
+<span class="c1">// Add JSDoc comments</span>
+<span class="cm">/**</span>
+<span class="cm"> * Get agent details</span>
+<span class="cm"> * @param agentId - The agent ID</span>
+<span class="cm"> * @returns Agent details</span>
+<span class="cm"> */</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">getAgent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">agentId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">Agent</span><span class="o">&gt;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Format with:
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>format
+npm<span class="w"> </span>run<span class="w"> </span>lint
+</code></pre></div></p>
+<h3 id="3-commit-messages">3. Commit Messages<a class="headerlink" href="#3-commit-messages" title="Permanent link">&para;</a></h3>
+<p>Follow conventional commits:</p>
+<div class="highlight"><pre><span></span><code>type(scope): subject
+
+body
+
+footer
+</code></pre></div>
+<p>Types: <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>style</code>, <code>refactor</code>, <code>test</code>, <code>chore</code></p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code>feat(agent): Add agent cloning functionality
+fix(api): Return correct status code for 404 responses
+docs(readme): Update installation instructions
+test(backend): Add tests for auth service
+chore(deps): Update dependencies
+</code></pre></div>
+<h3 id="4-testing">4. Testing<a class="headerlink" href="#4-testing" title="Permanent link">&para;</a></h3>
+<p>Write tests for all code:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Backend</span>
+<span class="nb">cd</span><span class="w"> </span>voicera_backend
+pytest
+
+<span class="c1"># Frontend</span>
+<span class="nb">cd</span><span class="w"> </span>voicera_frontend
+npm<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+<h4 id="test-coverage">Test Coverage<a class="headerlink" href="#test-coverage" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Unit tests for functions/components</li>
+<li>Integration tests for APIs</li>
+<li>E2E tests for critical flows</li>
+</ul>
+<p>Example test:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/test_agent_service.py</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_create_agent</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test agent creation&quot;&quot;&quot;</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">AgentService</span><span class="p">()</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Test Agent&quot;</span><span class="p">,</span>
+        <span class="n">llm_provider</span><span class="o">=</span><span class="s2">&quot;openai&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">agent</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Test Agent&quot;</span>
+    <span class="k">assert</span> <span class="n">agent</span><span class="o">.</span><span class="n">llm_provider</span> <span class="o">==</span> <span class="s2">&quot;openai&quot;</span>
+</code></pre></div>
+<h3 id="5-documentation">5. Documentation<a class="headerlink" href="#5-documentation" title="Permanent link">&para;</a></h3>
+<p>Update docs for all changes:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create feature docs</span>
+touch<span class="w"> </span>docs/features/your-feature.md
+</code></pre></div>
+<p>Docs should include:
+- What it does
+- How to use it
+- Code examples
+- Configuration options
+- Troubleshooting</p>
+<h3 id="6-pull-request">6. Pull Request<a class="headerlink" href="#6-pull-request" title="Permanent link">&para;</a></h3>
+<h4 id="create-pr">Create PR<a class="headerlink" href="#create-pr" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/your-feature
+<span class="c1"># Go to https://github.com/voicera/voicera_mono_repository/pull/new/feature/your-feature</span>
+</code></pre></div>
+<h4 id="pr-template">PR Template<a class="headerlink" href="#pr-template" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="gu">## Description</span>
+Brief description of changes
+
+<span class="gu">## Type of Change</span>
+<span class="k">- [ ]</span> Bug fix
+<span class="k">- [ ]</span> New feature
+<span class="k">- [ ]</span> Breaking change
+<span class="k">- [ ]</span> Documentation
+
+<span class="gu">## Changes</span>
+<span class="k">-</span><span class="w"> </span>Change 1
+<span class="k">-</span><span class="w"> </span>Change 2
+
+<span class="gu">## Testing</span>
+<span class="k">- [ ]</span> Tested locally
+<span class="k">- [ ]</span> Added/updated tests
+<span class="k">- [ ]</span> Tests pass
+
+<span class="gu">## Checklist</span>
+<span class="k">- [ ]</span> Code follows style guide
+<span class="k">- [ ]</span> Documentation updated
+<span class="k">- [ ]</span> No new warnings
+<span class="k">- [ ]</span> Ready for review
+</code></pre></div>
+<h4 id="pr-review-guidelines">PR Review Guidelines<a class="headerlink" href="#pr-review-guidelines" title="Permanent link">&para;</a></h4>
+<ul>
+<li>All PRs require at least 1 approval</li>
+<li>Tests must pass</li>
+<li>Code coverage should not decrease</li>
+<li>Documentation should be updated</li>
+</ul>
+<h3 id="7-code-review">7. Code Review<a class="headerlink" href="#7-code-review" title="Permanent link">&para;</a></h3>
+<p>When reviewing:</p>
+<div class="highlight"><pre><span></span><code>✅ Approve if:
+- Code is correct and follows style guide
+- Tests are adequate
+- Documentation is updated
+- No major issues
+
+⚠️ Request changes if:
+- Logic issues
+- Missing tests
+- Poor naming or style
+- Security concerns
+
+💬 Comment with suggestions
+</code></pre></div>
+<h2 id="architecture-decisions">Architecture Decisions<a class="headerlink" href="#architecture-decisions" title="Permanent link">&para;</a></h2>
+<h3 id="adr-architecture-decision-records">ADR (Architecture Decision Records)<a class="headerlink" href="#adr-architecture-decision-records" title="Permanent link">&para;</a></h3>
+<p>Document major decisions:</p>
+<div class="highlight"><pre><span></span><code><span class="gh"># ADR 001: Use Pipecat for Voice Processing</span>
+
+<span class="gu">## Status</span>
+ACCEPTED
+
+<span class="gu">## Context</span>
+Need real-time voice processing for agent calls
+
+<span class="gu">## Decision</span>
+Use Pipecat framework for voice bot pipeline
+
+<span class="gu">## Consequences</span>
+<span class="k">-</span><span class="w"> </span>Benefits: Real-time, modular, extensible
+<span class="k">-</span><span class="w"> </span>Drawbacks: Learning curve for team
+<span class="k">-</span><span class="w"> </span>Mitigations: Documentation, examples, training
+</code></pre></div>
+<p>Save as: <code>docs/adr/001-use-pipecat.md</code></p>
+<h2 id="code-structure">Code Structure<a class="headerlink" href="#code-structure" title="Permanent link">&para;</a></h2>
+<h3 id="backend-structure">Backend Structure<a class="headerlink" href="#backend-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>voicera_backend/
+├── app/
+│   ├── main.py              # App initialization
+│   ├── config.py            # Configuration
+│   ├── models/              # Data models
+│   ├── routers/             # API endpoints
+│   ├── services/            # Business logic
+│   ├── schemas/             # Pydantic schemas
+│   └── utils/               # Utilities
+├── tests/                   # Test files
+├── requirements.txt
+└── README.md
+</code></pre></div>
+<p>Guidelines:
+- Models: Data structures only
+- Schemas: API request/response
+- Services: Business logic
+- Routers: API endpoints
+- Utils: Shared helpers</p>
+<h3 id="frontend-structure">Frontend Structure<a class="headerlink" href="#frontend-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>voicera_frontend/
+├── app/                     # Next.js app
+├── components/              # React components
+├── hooks/                   # Custom hooks
+├── lib/                     # Utilities
+├── public/                  # Static files
+├── styles/                  # CSS modules
+└── __tests__/              # Tests
+</code></pre></div>
+<p>Guidelines:
+- Components: UI components only
+- Hooks: Reusable logic
+- Lib: API, utilities, helpers
+- Use TypeScript for type safety</p>
+<h3 id="voice-server-structure">Voice Server Structure<a class="headerlink" href="#voice-server-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>voice_2_voice_server/
+├── api/
+│   ├── server.py            # FastAPI server
+│   ├── bot.py               # Bot logic
+│   └── services.py          # Service integrations
+├── config/                  # Configuration
+├── services/                # Service providers
+│   ├── ai4bharat/
+│   ├── bhashini/
+│   └── kenpath_llm/
+├── storage/                 # Data storage
+└── main.py                  # Entry point
+</code></pre></div>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<h3 id="security-checklist">Security Checklist<a class="headerlink" href="#security-checklist" title="Permanent link">&para;</a></h3>
+<p>Before submitting PR:</p>
+<ul>
+<li>[ ] No hardcoded secrets</li>
+<li>[ ] Input validation added</li>
+<li>[ ] SQL injection prevention (if applicable)</li>
+<li>[ ] XSS prevention (for frontend)</li>
+<li>[ ] CSRF tokens used</li>
+<li>[ ] Rate limiting considered</li>
+<li>[ ] Error messages don't leak info</li>
+<li>[ ] Dependencies scanned for vulnerabilities</li>
+</ul>
+<h3 id="reporting-security-issues">Reporting Security Issues<a class="headerlink" href="#reporting-security-issues" title="Permanent link">&para;</a></h3>
+<p>Don't open public issues for security vulnerabilities!</p>
+<p>Email: security@voicera.ai</p>
+<p>Include:
+- Description of vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if any)</p>
+<h2 id="performance-guidelines">Performance Guidelines<a class="headerlink" href="#performance-guidelines" title="Permanent link">&para;</a></h2>
+<h3 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Use async/await</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_agent</span><span class="p">(</span><span class="n">agent_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Agent</span><span class="p">:</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">Agent</span><span class="o">.</span><span class="n">find_by_id</span><span class="p">(</span><span class="n">agent_id</span><span class="p">)</span>
+
+<span class="c1"># Use indexes for database queries</span>
+<span class="c1"># Add caching for frequently accessed data</span>
+<span class="nd">@cache</span><span class="p">(</span><span class="n">expire</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>  <span class="c1"># 5 minute cache</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_agent_config</span><span class="p">(</span><span class="n">agent_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">Agent</span><span class="o">.</span><span class="n">find_by_id</span><span class="p">(</span><span class="n">agent_id</span><span class="p">)</span>
+
+<span class="c1"># Avoid N+1 queries</span>
+<span class="n">agents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Agent</span><span class="o">.</span><span class="n">find_many</span><span class="p">()</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="s2">&quot;campaigns&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Use React.memo for expensive components</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ExpensiveComponent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">React</span><span class="p">.</span><span class="nx">memo</span><span class="p">(({</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">data</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;;</span>
+<span class="p">});</span>
+
+<span class="c1">// Use useMemo for expensive calculations</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">memoizedValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">expensiveCalculation</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">);</span>
+<span class="p">},</span><span class="w"> </span><span class="p">[</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">]);</span>
+
+<span class="c1">// Use useCallback to avoid unnecessary rerenders</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">handleClick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useCallback</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">},</span><span class="w"> </span><span class="p">[</span><span class="nx">dependencies</span><span class="p">]);</span>
+
+<span class="c1">// Code split large components</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">HeavyComponent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dynamic</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s1">&#39;./Heavy&#39;</span><span class="p">));</span>
+</code></pre></div>
+<h2 id="documentation-standards">Documentation Standards<a class="headerlink" href="#documentation-standards" title="Permanent link">&para;</a></h2>
+<h3 id="code-comments">Code Comments<a class="headerlink" href="#code-comments" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Good: Explains WHY, not WHAT</span>
+<span class="c1"># We cache the agent config because it&#39;s accessed frequently</span>
+<span class="c1"># and rarely changes, reducing database load by ~40%</span>
+<span class="n">agent_config</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get_or_fetch</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="c1"># Bad: Explains what the code does (obvious from code)</span>
+<span class="c1"># Set agent_config variable</span>
+<span class="n">agent_config</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get_or_fetch</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="readme-files">README Files<a class="headerlink" href="#readme-files" title="Permanent link">&para;</a></h3>
+<p>Each service should have:
+- Quick description
+- Prerequisites
+- Installation steps
+- Configuration options
+- Running instructions
+- Troubleshooting</p>
+<h3 id="api-documentation">API Documentation<a class="headerlink" href="#api-documentation" title="Permanent link">&para;</a></h3>
+<p>Use docstrings:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/agents&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">Agent</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_agent</span><span class="p">(</span>
+    <span class="n">agent</span><span class="p">:</span> <span class="n">AgentCreate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">)</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Agent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new voice agent.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        agent: Agent creation data</span>
+<span class="sd">        current_user: Current authenticated user</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Created agent</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: If agent creation fails</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        POST /agents</span>
+<span class="sd">        {</span>
+<span class="sd">            &quot;name&quot;: &quot;Support Bot&quot;,</span>
+<span class="sd">            &quot;llm_provider&quot;: &quot;openai&quot;</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">AgentService</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">current_user</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Backend</span>
+<span class="nb">cd</span><span class="w"> </span>voicera_backend
+pytest<span class="w">                          </span><span class="c1"># Run all tests</span>
+pytest<span class="w"> </span>tests/test_auth.py<span class="w">       </span><span class="c1"># Run single file</span>
+pytest<span class="w"> </span>-v<span class="w">                       </span><span class="c1"># Verbose output</span>
+pytest<span class="w"> </span>--cov<span class="o">=</span>app<span class="w">               </span><span class="c1"># With coverage</span>
+pytest<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;test_create&quot;</span><span class="w">        </span><span class="c1"># Run tests matching pattern</span>
+
+<span class="c1"># Frontend</span>
+<span class="nb">cd</span><span class="w"> </span>voicera_frontend
+npm<span class="w"> </span><span class="nb">test</span><span class="w">                        </span><span class="c1"># Run tests</span>
+npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--<span class="w"> </span>--watch<span class="w">            </span><span class="c1"># Watch mode</span>
+npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--<span class="w"> </span>--coverage<span class="w">         </span><span class="c1"># With coverage</span>
+</code></pre></div>
+<h2 id="cicd">CI/CD<a class="headerlink" href="#cicd" title="Permanent link">&para;</a></h2>
+<h3 id="github-actions">GitHub Actions<a class="headerlink" href="#github-actions" title="Permanent link">&para;</a></h3>
+<p>Tests run automatically on:
+- Push to main branch
+- All pull requests
+- Scheduled nightly builds</p>
+<p>Check status in PR: "All checks passed" ✅</p>
+<h2 id="release-process">Release Process<a class="headerlink" href="#release-process" title="Permanent link">&para;</a></h2>
+<h3 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h3>
+<p>Follow semantic versioning: <code>MAJOR.MINOR.PATCH</code></p>
+<ul>
+<li>MAJOR: Breaking changes</li>
+<li>MINOR: New features</li>
+<li>PATCH: Bug fixes</li>
+</ul>
+<p>Example: <code>v1.2.3</code></p>
+<h3 id="creating-release">Creating Release<a class="headerlink" href="#creating-release" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Update version in setup.py/package.json</span>
+<span class="c1"># Update CHANGELOG.md</span>
+git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.2.3<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Release v1.2.3&quot;</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.2.3
+<span class="c1"># GitHub creates release automatically</span>
+</code></pre></div>
+<h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Questions</strong>: Open GitHub discussion</li>
+<li><strong>Bugs</strong>: Report on GitHub issues</li>
+<li><strong>Security</strong>: Email security@voicera.ai</li>
+<li><strong>Chat</strong>: Join our Slack/Discord community</li>
+<li><strong>Docs</strong>: Check documentation</li>
+</ul>
+<h2 id="useful-resources">Useful Resources<a class="headerlink" href="#useful-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../local-setup/">Local Development Setup</a></li>
+<li><a href="../../architecture/overview/">Architecture</a></li>
+<li><a href="../../api/rest-api/">API Documentation</a></li>
+<li><a href="style-guide.md">Style Guide</a></li>
+<li><a href="roadmap.md">Roadmap</a></li>
+</ul>
+<h2 id="thank-you">Thank You!<a class="headerlink" href="#thank-you" title="Permanent link">&para;</a></h2>
+<p>Thank you for contributing to VoiceERA! Your efforts help make this project better for everyone.</p>
+<hr />
+<p>For questions, reach out on GitHub or community channels. Happy coding! 🚀</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2247 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A complete voice AI platform with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.">
+      
+      
+        <meta name="author" content="VoiceERA Team">
+      
+      
+        <link rel="canonical" href="https://voicera-docs.example.com/architecture/data-flow/">
+      
+      
+        <link rel="prev" href="../system-design/">
+      
+      
+        <link rel="next" href="../../services/backend/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Data Flow - VoiceERA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#data-flow-through-the-system" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="VoiceERA Documentation" class="md-header__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            VoiceERA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Data Flow
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="light" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../services/backend/" class="md-tabs__link">
+          
+  
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/rest-api/" class="md-tabs__link">
+          
+  
+  
+  API Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/local-setup/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="VoiceERA Documentation" class="md-nav__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    VoiceERA Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Flow
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#voice-call-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Voice Call Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Voice Call Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-voice-call-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Voice Call Sequence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detailed-data-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detailed Data Structures
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-creation-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Creation Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#campaign-launch-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign Launch Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analytics-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analytics Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recording-retrieval-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording Retrieval Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caching-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caching &amp; Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Caching &amp; Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Caching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Query Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling &amp; Recovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling &amp; Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stt-failure-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STT Failure Scenario
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Services
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/voice-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Voice Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-stt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat STT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-tts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat TTS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/websocket-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WebSocket API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/local-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="data-flow-through-the-system">Data Flow Through the System<a class="headerlink" href="#data-flow-through-the-system" title="Permanent link">&para;</a></h1>
+<p>This document explains how data moves through VoiceERA during various operations.</p>
+<h2 id="voice-call-data-flow">Voice Call Data Flow<a class="headerlink" href="#voice-call-data-flow" title="Permanent link">&para;</a></h2>
+<p>The most complex and important flow in VoiceERA.</p>
+<h3 id="complete-voice-call-sequence">Complete Voice Call Sequence<a class="headerlink" href="#complete-voice-call-sequence" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────────────┐
+│ Step 1: Call Initiation                                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Caller (Phone) ──[Ring &amp; Answer]──► Vobiz Platform                │
+│                                           │                         │
+│                                           ▼                         │
+│                      Voice Server [WebSocket Ready]                │
+│                                           │                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Step 2: Audio Input (Caller Speaks)                                 │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Caller Audio Frames ──[Vobiz]──► Voice Server                     │
+│                                        │                            │
+│                        ┌───────────────┼───────────────┐            │
+│                        │               │               │            │
+│                        ▼               ▼               ▼            │
+│                    [Buffer]        [Resample]   [Validate Audio]   │
+│                        │               │               │            │
+│                        └───────────────┼───────────────┘            │
+│                                        │                            │
+│                                        ▼                            │
+│                                   [STT Service]                    │
+│                                        │                            │
+│                                        ▼                            │
+│                                   &quot;Hello, I&#39;d like...&quot;              │
+│                                   (Transcript)                      │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Step 3: LLM Processing (Generate Response)                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Transcript ──► [System Prompt + Context] ──► LLM API              │
+│                                                   │                 │
+│                                                   ▼                 │
+│                                              OpenAI, Claude, etc.   │
+│                                                   │                 │
+│                                                   ▼                 │
+│                                      &quot;Sure, I&#39;d be happy to help...&quot;│
+│                                      (LLM Response)                 │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Step 4: TTS Synthesis (Voice Generation)                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Response Text ──► TTS API ──► Voice Generation                    │
+│                                   │                                │
+│                                   ▼                                │
+│                            [Audio Synthesis]                       │
+│                                   │                                │
+│                                   ▼                                │
+│                              Audio Frames                          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Step 5: Audio Output (Caller Hears Response)                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Audio Frames ──► [Vobiz] ──► Caller (Phone Speaker)              │
+│                                                                      │
+│                        [Loop continues]                            │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Step 6: Call Termination &amp; Storage                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Caller hangs up ──► Voice Server                                  │
+│                          │                                          │
+│          ┌───────────────┼───────────────┐                         │
+│          │               │               │                         │
+│          ▼               ▼               ▼                         │
+│       [Save Audio]   [Save Transcript] [Log Metadata]              │
+│          │               │               │                         │
+│          ▼               ▼               ▼                         │
+│        MinIO          MongoDB         MongoDB                      │
+│      (.wav file)      (transcript)    (call_log)                   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<h3 id="detailed-data-structures">Detailed Data Structures<a class="headerlink" href="#detailed-data-structures" title="Permanent link">&para;</a></h3>
+<p><strong>Audio Frame:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;audio&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234567890</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sequence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;base64-encoded-audio&gt;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pcm_16k&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>STT Request:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;audio&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;audio-data&gt;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;en&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nova-2&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>STT Response:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;transcript&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello, I&#39;d like to know about your services&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.98</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;alternatives&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;transcript&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello, I&#39;d like to know about the services&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>LLM Request:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-4&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;messages&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;system&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;You are a helpful customer service agent...&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello, I&#39;d like to know about your services&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;temperature&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">150</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>LLM Response:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;choices&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;assistant&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sure, I&#39;d be happy to help! We offer...&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;usage&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;prompt_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">45</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">78</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;total_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">123</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Call Log (MongoDB):</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">Objec</span><span class="kc">t</span><span class="err">Id(...)</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;campaign_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;phone_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;caller_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;duration_seconds&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">120</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;completed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;transcript&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;emotions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;satisfied&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;engaged&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;sentiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;positive&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">ISODa</span><span class="kc">te</span><span class="err">(</span><span class="s2">&quot;2024-01-29T10:30:00Z&quot;</span><span class="err">)</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">ISODa</span><span class="kc">te</span><span class="err">(</span><span class="s2">&quot;2024-01-29T10:32:00Z&quot;</span><span class="err">)</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Recording (MinIO):</strong>
+<div class="highlight"><pre><span></span><code>Path: recordings/{campaign_id}/{call_id}.wav
+Size: ~960 KB (2-minute call at 16kHz)
+Format: WAV (PCM, 16-bit, 16kHz mono)
+</code></pre></div></p>
+<hr />
+<h2 id="agent-creation-data-flow">Agent Creation Data Flow<a class="headerlink" href="#agent-creation-data-flow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────┐
+│ Frontend: Create Agent Form │
+└─────────────────────────────┘
+          │
+          ▼
+   ┌──────────────┐
+   │ Validate Form│
+   └──────────────┘
+          │
+          ▼
+  POST /agents (JSON)
+</code></pre></div>
+<p><strong>Request Payload:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sales Agent&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llm_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;openai&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llm_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-4&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stt_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;deepgram&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tts_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cartesia&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;system_prompt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;You are a sales agent...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;en&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Processing in Backend:</strong>
+<div class="highlight"><pre><span></span><code>1. Validate request data
+2. Check user permissions
+3. Create Agent document in MongoDB
+4. Generate config file
+5. Save config to MinIO
+6. Return Agent ID to frontend
+</code></pre></div></p>
+<p><strong>Response:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agent-uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sales Agent&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-29T10:30:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Stored in MongoDB (agents collection):</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">Objec</span><span class="kc">t</span><span class="err">Id(...)</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agent-uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sales Agent&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llm_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;openai&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llm_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-4&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stt_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;deepgram&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tts_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cartesia&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;system_prompt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;You are a sales agent...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;en&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">ISODa</span><span class="kc">te</span><span class="err">(...)</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">ISODa</span><span class="kc">te</span><span class="err">(...)</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<hr />
+<h2 id="campaign-launch-data-flow">Campaign Launch Data Flow<a class="headerlink" href="#campaign-launch-data-flow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌──────────────────────────┐
+│ Backend: Create Campaign │
+└──────────────────────────┘
+          │
+          ▼
+  POST /campaigns (JSON)
+
+  {
+    &quot;name&quot;: &quot;New Year Sale&quot;,
+    &quot;agent_id&quot;: &quot;agent-uuid&quot;,
+    &quot;phone_numbers&quot;: [&quot;+1234567890&quot;, &quot;+1234567891&quot;],
+    &quot;start_time&quot;: &quot;2024-02-01T00:00:00Z&quot;,
+    &quot;end_time&quot;: &quot;2024-02-28T23:59:59Z&quot;
+  }
+
+┌──────────────────────────────┐
+│ Backend: Validation &amp; Setup  │
+└──────────────────────────────┘
+          │
+  ┌───────┼────────┐
+  │       │        │
+  ▼       ▼        ▼
+1. Fetch 2. Check 3. Create
+   Agent  Limits   Campaign
+   Config         Document
+
+┌──────────────────────┐
+│ Save to MongoDB      │
+│ campaigns collection │
+└──────────────────────┘
+          │
+          ▼
+  ┌───────────────────┐
+  │ Schedule calls    │
+  │ via Vobiz API     │
+  └───────────────────┘
+          │
+          ▼
+  Response: campaign_id
+</code></pre></div>
+<hr />
+<h2 id="analytics-data-flow">Analytics Data Flow<a class="headerlink" href="#analytics-data-flow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>Real-time call data
+       │
+       ├─► MongoDB (Raw logs)
+       │
+       ├─► Aggregation Pipeline
+       │
+       └─► Cached metrics
+           (Redis optional)
+
+Frontend Dashboard
+       │
+       ▼
+GET /analytics/calls?agent_id=...
+GET /analytics/sentiment?campaign_id=...
+GET /analytics/top-phrases?agent_id=...
+       │
+       ▼
+  Backend aggregates
+       │
+       ▼
+  Return JSON metrics
+       │
+       ▼
+  Display in charts
+</code></pre></div>
+<p><strong>Analytics Data in MongoDB:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">Objec</span><span class="kc">t</span><span class="err">Id(...)</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;call_analytics&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;agent_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agent-uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;campaign_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;campaign-uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;period&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-29&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;metrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;total_calls&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">150</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;completed_calls&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">145</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;average_duration&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;sentiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;positive&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">95</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;neutral&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;negative&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;top_phrases&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;pricing&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;features&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;support&quot;</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<hr />
+<h2 id="recording-retrieval-data-flow">Recording Retrieval Data Flow<a class="headerlink" href="#recording-retrieval-data-flow" title="Permanent link">&para;</a></h2>
+<p><strong>User Action:</strong> Download call recording</p>
+<div class="highlight"><pre><span></span><code>Frontend
+    │
+    ├─► User clicks &quot;Download&quot;
+    │
+    ├─► GET /call-logs/{call_id}
+    │
+    ▼
+Backend
+    │
+    ├─► Fetch metadata from MongoDB
+    │
+    ├─► Generate pre-signed URL for MinIO
+    │
+    ▼
+Response
+    │
+    ├─► {
+         &quot;call_id&quot;: &quot;...&quot;,
+         &quot;download_url&quot;: &quot;https://minio:9001/...&quot;,
+         &quot;transcript&quot;: &quot;...&quot;,
+         &quot;duration&quot;: 120
+       }
+    │
+    ▼
+Frontend
+    │
+    ├─► User clicks download link
+    │
+    └─► Browser downloads audio from MinIO
+</code></pre></div>
+<hr />
+<h2 id="authentication-data-flow">Authentication Data Flow<a class="headerlink" href="#authentication-data-flow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌──────────────────────────────┐
+│ Frontend: Login Form         │
+│ Email: user@example.com      │
+│ Password: ••••••••           │
+└──────────────────────────────┘
+          │
+          ▼
+POST /auth/login
+{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;••••••••&quot;
+}
+
+┌──────────────────────────────┐
+│ Backend: Authenticate        │
+└──────────────────────────────┘
+          │
+    ┌─────┴─────┐
+    │           │
+    ▼           ▼
+1. Fetch   2. Hash &amp;
+   User       Compare
+   from       password
+   MongoDB
+    │           │
+    └─────┬─────┘
+          │
+          ▼
+    ┌──────────────┐
+    │ Credentials  │
+    │ Valid?       │
+    └──────────────┘
+          │
+          ├─── YES ──► Generate JWT
+          │                │
+          │                ▼
+          │           {
+          │             &quot;user_id&quot;: &quot;uuid&quot;,
+          │             &quot;email&quot;: &quot;...&quot;,
+          │             &quot;iat&quot;: 1234567890,
+          │             &quot;exp&quot;: 1234571490,
+          │             &quot;permissions&quot;: [&quot;read&quot;, &quot;write&quot;]
+          │           }
+          │                │
+          │                ▼
+          │           Response:
+          │           {
+          │             &quot;token&quot;: &quot;eyJ0eXAi...&quot;,
+          │             &quot;expires_in&quot;: 3600
+          │           }
+          │
+          ├─── NO ──► Response 401 Unauthorized
+</code></pre></div>
+<hr />
+<h2 id="caching-performance">Caching &amp; Performance<a class="headerlink" href="#caching-performance" title="Permanent link">&para;</a></h2>
+<h3 id="backend-caching">Backend Caching<a class="headerlink" href="#backend-caching" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>Request 1: GET /agents/123
+  │
+  ├─► Cache MISS
+  │      │
+  │      ▼
+  │   Query MongoDB
+  │      │
+  │      ▼
+  │   Store in cache (TTL: 10min)
+  │      │
+  └─────► Return to client
+
+Request 2: GET /agents/123 (within 10min)
+  │
+  ├─► Cache HIT
+  │      │
+  └─────► Return from cache (no DB query)
+</code></pre></div>
+<h3 id="database-query-optimization">Database Query Optimization<a class="headerlink" href="#database-query-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Without index (slow):</strong>
+<div class="highlight"><pre><span></span><code>SCAN all documents in call_logs collection
+Filter by campaign_id
+O(n) - millions of documents
+</code></pre></div></p>
+<p><strong>With index (fast):</strong>
+<div class="highlight"><pre><span></span><code>LOOKUP in index for campaign_id
+O(log n) - direct access
+</code></pre></div></p>
+<hr />
+<h2 id="error-handling-recovery">Error Handling &amp; Recovery<a class="headerlink" href="#error-handling-recovery" title="Permanent link">&para;</a></h2>
+<h3 id="stt-failure-scenario">STT Failure Scenario<a class="headerlink" href="#stt-failure-scenario" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>Voice Server receives audio
+    │
+    ▼
+Send to STT Service
+    │
+    X Error: Service unavailable
+    │
+    ▼
+Retry with backoff (1s, 2s, 4s)
+    │
+    ├─► Success on retry 2
+    │      │
+    │      ▼
+    │   Continue call flow
+    │
+    └─► All retries failed
+         │
+         ▼
+      Fallback: Ask user to repeat
+      │
+      ▼
+      If persistent: End call gracefully
+</code></pre></div>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Data Path</th>
+<th>Storage</th>
+<th>Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Voice Call</strong></td>
+<td>Audio frames → STT → LLM → TTS</td>
+<td>MinIO + MongoDB</td>
+<td>&lt;500ms</td>
+</tr>
+<tr>
+<td><strong>Create Agent</strong></td>
+<td>Form → Backend → MongoDB</td>
+<td>MongoDB</td>
+<td>&lt;200ms</td>
+</tr>
+<tr>
+<td><strong>Launch Campaign</strong></td>
+<td>Form → Backend → Vobiz</td>
+<td>MongoDB</td>
+<td>&lt;500ms</td>
+</tr>
+<tr>
+<td><strong>Get Analytics</strong></td>
+<td>Query MongoDB → Aggregate</td>
+<td>MongoDB</td>
+<td>&lt;1000ms</td>
+</tr>
+<tr>
+<td><strong>Download Recording</strong></td>
+<td>Pre-signed URL → MinIO</td>
+<td>MinIO</td>
+<td>Depends on file size</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../system-design/">System Design Details</a></strong> - Component implementation details</li>
+<li><strong><a href="../../api/rest-api/">REST API</a></strong> - Endpoint specifications</li>
+<li><strong><a href="../../api/websocket-api/">WebSocket API</a></strong> - Real-time communication protocol</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

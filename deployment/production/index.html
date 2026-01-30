@@ -1,0 +1,2327 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A complete voice AI platform with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.">
+      
+      
+        <meta name="author" content="VoiceERA Team">
+      
+      
+        <link rel="canonical" href="https://voicera-docs.example.com/deployment/production/">
+      
+      
+        <link rel="prev" href="../docker/">
+      
+      
+        <link rel="next" href="../environment/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Production Deployment - VoiceERA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#production-deployment" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="VoiceERA Documentation" class="md-header__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            VoiceERA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Production Deployment
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="light" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../services/backend/" class="md-tabs__link">
+          
+  
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/rest-api/" class="md-tabs__link">
+          
+  
+  
+  API Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/local-setup/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="VoiceERA Documentation" class="md-nav__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    VoiceERA Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/system-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Services
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/voice-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Voice Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-stt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat STT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-tts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat TTS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/websocket-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WebSocket API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pre-deployment-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-Deployment Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Infrastructure Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimum-production-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimum Production Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-production-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Production Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ssltls-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSL/TLS Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SSL/TLS Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#obtain-certificates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obtain Certificates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nginx-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nginx Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mongodb-production-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MongoDB Production Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mongodb-replica-set-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MongoDB Replica Set Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring &amp; Observability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring &amp; Observability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prometheus-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prometheus Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grafana-dashboards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grafana Dashboards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-aggregation-elk-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Aggregation (ELK Stack)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Hardening
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Hardening">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#firewall-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firewall Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Tuning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Tuning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#voice-server-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Voice Server Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-indexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Indexes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disaster-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disaster Recovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Disaster Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backup-strategy_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failover-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failover Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rolling-deployments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rolling Deployments
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rolling Deployments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zero-downtime-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zero-Downtime Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/local-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="production-deployment">Production Deployment<a class="headerlink" href="#production-deployment" title="Permanent link">&para;</a></h1>
+<p>Guidelines and best practices for deploying VoiceERA to production.</p>
+<h2 id="pre-deployment-checklist">Pre-Deployment Checklist<a class="headerlink" href="#pre-deployment-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] All environment variables configured securely</li>
+<li>[ ] Database backups configured</li>
+<li>[ ] SSL/TLS certificates obtained</li>
+<li>[ ] Load balancer configured</li>
+<li>[ ] Monitoring and logging setup</li>
+<li>[ ] Security scanning completed</li>
+<li>[ ] Performance testing passed</li>
+<li>[ ] Disaster recovery plan documented</li>
+</ul>
+<h2 id="infrastructure-requirements">Infrastructure Requirements<a class="headerlink" href="#infrastructure-requirements" title="Permanent link">&para;</a></h2>
+<h3 id="minimum-production-setup">Minimum Production Setup<a class="headerlink" href="#minimum-production-setup" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CPU:</strong> 4 cores</li>
+<li><strong>RAM:</strong> 16GB</li>
+<li><strong>Disk:</strong> 200GB (SSD preferred)</li>
+<li><strong>Network:</strong> 100 Mbps bandwidth</li>
+</ul>
+<h3 id="recommended-production-setup">Recommended Production Setup<a class="headerlink" href="#recommended-production-setup" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CPU:</strong> 8+ cores</li>
+<li><strong>RAM:</strong> 32GB+</li>
+<li><strong>Disk:</strong> 500GB+ SSD (for call recordings)</li>
+<li><strong>GPU:</strong> NVIDIA GPU (for AI4Bharat services)</li>
+<li><strong>Network:</strong> 1 Gbps bandwidth</li>
+</ul>
+<h2 id="deployment-architecture">Deployment Architecture<a class="headerlink" href="#deployment-architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────┐
+│                Internet                          │
+└────────────────────┬────────────────────────────┘
+                     │
+              ┌──────▼──────┐
+              │ SSL/TLS     │
+              │ Termination │
+              └──────┬──────┘
+                     │
+              ┌──────▼──────┐
+              │ Load         │
+              │ Balancer     │
+              │ (Nginx/HAProxy)
+              └──────┬──────┘
+                     │
+         ┌───────────┼───────────┐
+         ▼           ▼           ▼
+    Backend 1  Backend 2  Backend 3
+    :8000      :8000      :8000
+         │           │           │
+         └───────────┼───────────┘
+                     │
+              ┌──────▼──────┐
+              │ MongoDB     │
+              │ Replica Set │
+              └─────────────┘
+
+Voice Servers (Separate cluster):
+    Voice 1 (:7860)
+    Voice 2 (:7860)
+    Voice 3 (:7860)
+         │
+         ▼
+    Backend (Shared)
+</code></pre></div>
+<h2 id="ssltls-configuration">SSL/TLS Configuration<a class="headerlink" href="#ssltls-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="obtain-certificates">Obtain Certificates<a class="headerlink" href="#obtain-certificates" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Using Let&#39;s Encrypt with Certbot</span>
+sudo<span class="w"> </span>certbot<span class="w"> </span>certonly<span class="w"> </span>--standalone<span class="w"> </span>-d<span class="w"> </span>yourdomain.com<span class="w"> </span>-d<span class="w"> </span>api.yourdomain.com
+
+<span class="c1"># Certificates saved to:</span>
+<span class="c1"># /etc/letsencrypt/live/yourdomain.com/</span>
+</code></pre></div>
+<h3 id="nginx-configuration">Nginx Configuration<a class="headerlink" href="#nginx-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># /etc/nginx/sites-enabled/voicera.conf</span>
+
+<span class="c1"># HTTP to HTTPS redirect</span>
+<span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">yourdomain.com</span><span class="w"> </span><span class="s">api.yourdomain.com</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">return</span><span class="w"> </span><span class="mi">301</span><span class="w"> </span><span class="s">https://</span><span class="nv">$server_name$request_uri</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1"># HTTPS - Frontend</span>
+<span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="w"> </span><span class="s">http2</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">yourdomain.com</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">ssl_certificate</span><span class="w"> </span><span class="s">/etc/letsencrypt/live/yourdomain.com/fullchain.pem</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_certificate_key</span><span class="w"> </span><span class="s">/etc/letsencrypt/live/yourdomain.com/privkey.pem</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1"># SSL configuration</span>
+<span class="w">    </span><span class="kn">ssl_protocols</span><span class="w"> </span><span class="s">TLSv1.2</span><span class="w"> </span><span class="s">TLSv1.3</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_ciphers</span><span class="w"> </span><span class="s">HIGH:!aNULL:!MD5</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_prefer_server_ciphers</span><span class="w"> </span><span class="no">on</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://frontend:3000</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-For</span><span class="w"> </span><span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-Proto</span><span class="w"> </span><span class="nv">$scheme</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># HTTPS - Backend API</span>
+<span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="w"> </span><span class="s">http2</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">api.yourdomain.com</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">ssl_certificate</span><span class="w"> </span><span class="s">/etc/letsencrypt/live/yourdomain.com/fullchain.pem</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_certificate_key</span><span class="w"> </span><span class="s">/etc/letsencrypt/live/yourdomain.com/privkey.pem</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">ssl_protocols</span><span class="w"> </span><span class="s">TLSv1.2</span><span class="w"> </span><span class="s">TLSv1.3</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_ciphers</span><span class="w"> </span><span class="s">HIGH:!aNULL:!MD5</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_prefer_server_ciphers</span><span class="w"> </span><span class="no">on</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1"># Rate limiting</span>
+<span class="w">    </span><span class="kn">limit_req_zone</span><span class="w"> </span><span class="nv">$binary_remote_addr</span><span class="w"> </span><span class="s">zone=api_limit:10m</span><span class="w"> </span><span class="s">rate=100r/s</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">limit_req</span><span class="w"> </span><span class="s">zone=api_limit</span><span class="w"> </span><span class="s">burst=200</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://backend:8000</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-For</span><span class="w"> </span><span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-Proto</span><span class="w"> </span><span class="nv">$scheme</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1"># WebSocket support</span>
+<span class="w">        </span><span class="kn">proxy_http_version</span><span class="w"> </span><span class="mi">1</span><span class="s">.1</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Upgrade</span><span class="w"> </span><span class="nv">$http_upgrade</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Connection</span><span class="w"> </span><span class="s">&quot;upgrade&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># Voice Server WebSocket</span>
+<span class="k">upstream</span><span class="w"> </span><span class="s">voice_servers</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">least_conn</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server</span><span class="w"> </span><span class="n">voice-server-1</span><span class="p">:</span><span class="mi">7860</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server</span><span class="w"> </span><span class="n">voice-server-2</span><span class="p">:</span><span class="mi">7860</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server</span><span class="w"> </span><span class="n">voice-server-3</span><span class="p">:</span><span class="mi">7860</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="w"> </span><span class="s">http2</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">voice.yourdomain.com</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">ssl_certificate</span><span class="w"> </span><span class="s">/etc/letsencrypt/live/yourdomain.com/fullchain.pem</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_certificate_key</span><span class="w"> </span><span class="s">/etc/letsencrypt/live/yourdomain.com/privkey.pem</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://voice_servers</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_http_version</span><span class="w"> </span><span class="mi">1</span><span class="s">.1</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Upgrade</span><span class="w"> </span><span class="nv">$http_upgrade</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Connection</span><span class="w"> </span><span class="s">&quot;upgrade&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-For</span><span class="w"> </span><span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="database-configuration">Database Configuration<a class="headerlink" href="#database-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="mongodb-production-setup">MongoDB Production Setup<a class="headerlink" href="#mongodb-production-setup" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># docker-compose.prod.yml</span>
+<span class="nt">mongodb</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo:6.0</span>
+<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongod --replSet rs0 --bind_ip_all</span>
+<span class="w">  </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">MONGO_INITDB_ROOT_USERNAME</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${MONGO_ADMIN_USER}</span>
+<span class="w">    </span><span class="nt">MONGO_INITDB_ROOT_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${MONGO_ADMIN_PASSWORD}</span>
+<span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongodb_prod_data:/data/db</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongodb_prod_config:/data/configdb</span>
+<span class="w">  </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">voicera_network</span>
+<span class="w">  </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always</span>
+<span class="w">  </span><span class="nt">healthcheck</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">test</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;CMD&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;mongosh&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;--eval&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;db.adminCommand(&#39;ping&#39;)&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10s</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<span class="w">    </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<h3 id="mongodb-replica-set-initialization">MongoDB Replica Set Initialization<a class="headerlink" href="#mongodb-replica-set-initialization" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Initialize replica set</span>
+docker-compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mongodb<span class="w"> </span>mongosh<span class="w"> </span>--username<span class="w"> </span><span class="nv">$MONGO_ADMIN_USER</span><span class="w"> </span>--password<span class="w"> </span><span class="nv">$MONGO_ADMIN_PASSWORD</span>
+
+<span class="c1"># In mongosh:</span>
+rs.initiate<span class="o">({</span>
+<span class="w">  </span>_id:<span class="w"> </span><span class="s2">&quot;rs0&quot;</span>,
+<span class="w">  </span>members:<span class="w"> </span><span class="o">[</span>
+<span class="w">    </span><span class="o">{</span><span class="w"> </span>_id:<span class="w"> </span><span class="m">0</span>,<span class="w"> </span>host:<span class="w"> </span><span class="s2">&quot;mongodb:27017&quot;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">  </span><span class="o">]</span>
+<span class="o">})</span>
+</code></pre></div>
+<h3 id="backup-strategy">Backup Strategy<a class="headerlink" href="#backup-strategy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="c1"># Daily MongoDB backup script</span>
+
+<span class="nv">BACKUP_DIR</span><span class="o">=</span>/backups/mongodb
+<span class="nv">DATE</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d_%H%M%S<span class="k">)</span>
+
+<span class="c1"># Create backup</span>
+docker-compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mongodb<span class="w"> </span>mongodump<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--username<span class="w"> </span><span class="nv">$MONGO_ADMIN_USER</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--password<span class="w"> </span><span class="nv">$MONGO_ADMIN_PASSWORD</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--out<span class="w"> </span><span class="nv">$BACKUP_DIR</span>/backup_<span class="nv">$DATE</span>
+
+<span class="c1"># Upload to S3</span>
+aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span><span class="nv">$BACKUP_DIR</span>/backup_<span class="nv">$DATE</span><span class="w"> </span>s3://voicera-backups/
+
+<span class="c1"># Keep only last 30 days</span>
+find<span class="w"> </span><span class="nv">$BACKUP_DIR</span><span class="w"> </span>-type<span class="w"> </span>d<span class="w"> </span>-mtime<span class="w"> </span>+30<span class="w"> </span>-exec<span class="w"> </span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="o">{}</span><span class="w"> </span><span class="se">\;</span>
+</code></pre></div>
+<h2 id="monitoring-observability">Monitoring &amp; Observability<a class="headerlink" href="#monitoring-observability" title="Permanent link">&para;</a></h2>
+<h3 id="prometheus-configuration">Prometheus Configuration<a class="headerlink" href="#prometheus-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># prometheus.yml</span>
+<span class="nt">global</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span>
+<span class="w">  </span><span class="nt">evaluation_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span>
+
+<span class="nt">scrape_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;voicera-backend&#39;</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;backend:8000&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/metrics&#39;</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;voicera-voice-server&#39;</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;voice_server:7860&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/metrics&#39;</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;mongodb&#39;</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;mongodb:27017&#39;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="grafana-dashboards">Grafana Dashboards<a class="headerlink" href="#grafana-dashboards" title="Permanent link">&para;</a></h3>
+<p>Key dashboards to create:</p>
+<ul>
+<li><strong>System Health:</strong> CPU, Memory, Disk usage</li>
+<li><strong>API Metrics:</strong> Request rate, response time, errors</li>
+<li><strong>Voice Metrics:</strong> Active calls, call duration, success rate</li>
+<li><strong>Database:</strong> Connection pool, query latency, document count</li>
+</ul>
+<h3 id="log-aggregation-elk-stack">Log Aggregation (ELK Stack)<a class="headerlink" href="#log-aggregation-elk-stack" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># docker-compose.prod.yml additions</span>
+<span class="nt">elasticsearch</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.elastic.co/elasticsearch/elasticsearch:8.0.0</span>
+<span class="w">  </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">discovery.type=single-node</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xpack.security.enabled=false</span>
+
+<span class="nt">logstash</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.elastic.co/logstash/logstash:8.0.0</span>
+<span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./logstash.conf:/usr/share/logstash/pipeline/logstash.conf</span>
+
+<span class="nt">kibana</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.elastic.co/kibana/kibana:8.0.0</span>
+<span class="w">  </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;5601:5601&quot;</span>
+</code></pre></div>
+<h2 id="security-hardening">Security Hardening<a class="headerlink" href="#security-hardening" title="Permanent link">&para;</a></h2>
+<h3 id="firewall-rules">Firewall Rules<a class="headerlink" href="#firewall-rules" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># UFW (Ubuntu)</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>default<span class="w"> </span>deny<span class="w"> </span>incoming
+sudo<span class="w"> </span>ufw<span class="w"> </span>default<span class="w"> </span>allow<span class="w"> </span>outgoing
+
+<span class="c1"># Allow SSH</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">22</span>/tcp
+
+<span class="c1"># Allow HTTP/HTTPS</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">80</span>/tcp
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">443</span>/tcp
+
+<span class="c1"># Allow specific internal services</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span>from<span class="w"> </span><span class="m">10</span>.0.0.0/8<span class="w"> </span>to<span class="w"> </span>any<span class="w"> </span>port<span class="w"> </span><span class="m">27017</span>
+
+<span class="c1"># Enable firewall</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span><span class="nb">enable</span>
+</code></pre></div>
+<h3 id="secrets-management">Secrets Management<a class="headerlink" href="#secrets-management" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Never commit secrets to git</span>
+.env.prod
+secrets/
+*.key
+
+<span class="c1"># Use environment variables or secret management tool</span>
+<span class="c1"># Example: HashiCorp Vault</span>
+
+<span class="c1"># Access secret</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-Vault-Token: </span><span class="nv">$VAULT_TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://vault.example.com/v1/secret/data/voicera
+</code></pre></div>
+<h3 id="database-security">Database Security<a class="headerlink" href="#database-security" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create restricted user</span>
+db.createUser<span class="o">({</span>
+<span class="w">  </span>user:<span class="w"> </span><span class="s2">&quot;backend_user&quot;</span>,
+<span class="w">  </span>pwd:<span class="w"> </span><span class="s2">&quot;strong_password_here&quot;</span>,
+<span class="w">  </span>roles:<span class="w"> </span><span class="o">[</span>
+<span class="w">    </span><span class="o">{</span><span class="w"> </span>role:<span class="w"> </span><span class="s2">&quot;readWrite&quot;</span>,<span class="w"> </span>db:<span class="w"> </span><span class="s2">&quot;voicera&quot;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">  </span><span class="o">]</span>
+<span class="o">})</span>
+
+<span class="c1"># Create read-only user</span>
+db.createUser<span class="o">({</span>
+<span class="w">  </span>user:<span class="w"> </span><span class="s2">&quot;analytics_user&quot;</span>,
+<span class="w">  </span>pwd:<span class="w"> </span><span class="s2">&quot;analytics_password&quot;</span>,
+<span class="w">  </span>roles:<span class="w"> </span><span class="o">[</span>
+<span class="w">    </span><span class="o">{</span><span class="w"> </span>role:<span class="w"> </span><span class="s2">&quot;read&quot;</span>,<span class="w"> </span>db:<span class="w"> </span><span class="s2">&quot;voicera&quot;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">  </span><span class="o">]</span>
+<span class="o">})</span>
+</code></pre></div>
+<h2 id="performance-tuning">Performance Tuning<a class="headerlink" href="#performance-tuning" title="Permanent link">&para;</a></h2>
+<h3 id="backend-configuration">Backend Configuration<a class="headerlink" href="#backend-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># voicera_backend environment</span>
+<span class="l l-Scalar l-Scalar-Plain">MONGODB_MAX_POOL_SIZE=50</span>
+<span class="l l-Scalar l-Scalar-Plain">MONGODB_TIMEOUT_MS=10000</span>
+<span class="l l-Scalar l-Scalar-Plain">API_WORKER_COUNT=8</span>
+<span class="l l-Scalar l-Scalar-Plain">API_WORKER_CLASS=uvicorn.workers.UvicornWorker</span>
+</code></pre></div>
+<h3 id="voice-server-optimization">Voice Server Optimization<a class="headerlink" href="#voice-server-optimization" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># voice_2_voice_server environment</span>
+<span class="l l-Scalar l-Scalar-Plain">MAX_CONCURRENT_CALLS=100</span>
+<span class="l l-Scalar l-Scalar-Plain">AUDIO_BUFFER_SIZE=32768</span>
+<span class="l l-Scalar l-Scalar-Plain">STT_BATCH_SIZE=32</span>
+<span class="l l-Scalar l-Scalar-Plain">SESSION_TIMEOUT_MINUTES=60</span>
+</code></pre></div>
+<h3 id="database-indexes">Database Indexes<a class="headerlink" href="#database-indexes" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Ensure critical indexes exist</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">agents</span><span class="p">.</span><span class="nx">createIndex</span><span class="p">({</span><span class="w"> </span><span class="nx">user_id</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">campaigns</span><span class="p">.</span><span class="nx">createIndex</span><span class="p">({</span><span class="w"> </span><span class="nx">agent_id</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">call_logs</span><span class="p">.</span><span class="nx">createIndex</span><span class="p">({</span><span class="w"> </span><span class="nx">campaign_id</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="nx">created_at</span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span><span class="w"> </span><span class="p">})</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">call_logs</span><span class="p">.</span><span class="nx">createIndex</span><span class="p">({</span><span class="w"> </span><span class="nx">phone_number</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">call_logs</span><span class="p">.</span><span class="nx">createIndex</span><span class="p">({</span><span class="w"> </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="nx">created_at</span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span><span class="w"> </span><span class="p">})</span>
+</code></pre></div>
+<h2 id="disaster-recovery">Disaster Recovery<a class="headerlink" href="#disaster-recovery" title="Permanent link">&para;</a></h2>
+<h3 id="backup-strategy_1">Backup Strategy<a class="headerlink" href="#backup-strategy_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Daily backups</strong> - Automated MongoDB dumps</li>
+<li><strong>Hourly snapshots</strong> - EBS volume snapshots (AWS)</li>
+<li><strong>Geographic replication</strong> - Multi-region backup</li>
+<li><strong>Point-in-time recovery</strong> - Binary log retention</li>
+</ol>
+<h3 id="failover-configuration">Failover Configuration<a class="headerlink" href="#failover-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Use managed services for auto-failover</span>
+<span class="c1"># AWS RDS for MongoDB Atlas</span>
+<span class="c1"># Google Cloud MongoDB</span>
+<span class="c1"># Or Kubernetes with StatefulSets for self-managed</span>
+</code></pre></div>
+<h2 id="rolling-deployments">Rolling Deployments<a class="headerlink" href="#rolling-deployments" title="Permanent link">&para;</a></h2>
+<h3 id="zero-downtime-updates">Zero-Downtime Updates<a class="headerlink" href="#zero-downtime-updates" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="c1"># Rolling deployment script</span>
+
+<span class="nb">set</span><span class="w"> </span>-e
+
+<span class="c1"># Backend rolling update</span>
+docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-deps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--remove-orphans<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>backend
+
+<span class="c1"># Wait for health check</span>
+sleep<span class="w"> </span><span class="m">30</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://backend:8000/health<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># Update frontend</span>
+docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-deps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>frontend
+
+<span class="c1"># Update voice server (requires client reconnection)</span>
+<span class="c1"># Can be done during low-traffic period</span>
+docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-deps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>voice_server
+</code></pre></div>
+<h2 id="monitoring-checklist">Monitoring Checklist<a class="headerlink" href="#monitoring-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Uptime monitoring (e.g., Pingdom, Datadog)</li>
+<li>[ ] Error tracking (e.g., Sentry)</li>
+<li>[ ] Performance monitoring (e.g., New Relic)</li>
+<li>[ ] Security scanning (e.g., Snyk)</li>
+<li>[ ] Log aggregation (e.g., ELK, Splunk)</li>
+<li>[ ] Alerting configured (PagerDuty, OpsGenie)</li>
+</ul>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../environment/">Environment Variables</a></strong> - Production configuration</li>
+<li><strong><a href="../docker/">Docker Deployment</a></strong> - Container deployment</li>
+<li><strong><a href="../../getting-started/quickstart/">Quick Start</a></strong> - Development setup</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

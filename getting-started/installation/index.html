@@ -1,0 +1,2156 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A complete voice AI platform with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.">
+      
+      
+        <meta name="author" content="VoiceERA Team">
+      
+      
+        <link rel="canonical" href="https://voicera-docs.example.com/getting-started/installation/">
+      
+      
+        <link rel="prev" href="../../quick-reference/">
+      
+      
+        <link rel="next" href="../quickstart/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Installation - VoiceERA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#installation-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="VoiceERA Documentation" class="md-header__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            VoiceERA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Installation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="dark" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="light" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../services/backend/" class="md-tabs__link">
+          
+  
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/rest-api/" class="md-tabs__link">
+          
+  
+  
+  API Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/local-setup/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="VoiceERA Documentation" class="md-nav__button md-logo" aria-label="VoiceERA Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    VoiceERA Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#system-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="System Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimum-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimum Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker &amp; Docker Compose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nodejs-optional-for-local-frontend-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node.js (Optional - for local frontend development)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-310-optional-for-local-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python 3.10+ (Optional - for local development)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-optional-for-using-makefile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make (Optional - for using Makefile)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone the Repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-backend-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Backend Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-voice-server-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Voice Server Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-ngrok-expose-local-voice-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional: Ngrok (Expose Local Voice Server)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-frontend-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Frontend Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verify-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verify Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-docker-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Docker Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-python-installation-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Python Installation (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-nodejs-installation-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Node.js Installation (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Docker Images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verify-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-daemon-not-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker daemon not running
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-denied-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission denied errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port already in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#out-of-disk-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out of disk space
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Help
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/system-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Services
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/voice-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Voice Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-stt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat STT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../services/ai4bharat-tts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI4Bharat TTS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/websocket-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WebSocket API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/local-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="installation-guide">Installation Guide<a class="headerlink" href="#installation-guide" title="Permanent link">&para;</a></h1>
+<p>This guide will help you install and set up VoiceERA on your system.</p>
+<h2 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h2>
+<h3 id="minimum-requirements">Minimum Requirements<a class="headerlink" href="#minimum-requirements" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>OS:</strong> Linux, macOS, or Windows (WSL2)</li>
+<li><strong>RAM:</strong> 8GB</li>
+<li><strong>Disk Space:</strong> 50GB (including Docker images)</li>
+<li><strong>Docker:</strong> 20.10+</li>
+<li><strong>Docker Compose:</strong> 1.29+</li>
+</ul>
+<h3 id="recommended-requirements">Recommended Requirements<a class="headerlink" href="#recommended-requirements" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>OS:</strong> Linux (Ubuntu 20.04 LTS or newer)</li>
+<li><strong>RAM:</strong> 16GB+</li>
+<li><strong>CPU Cores:</strong> 4+</li>
+<li><strong>GPU:</strong> NVIDIA GPU with CUDA support (for local AI4Bharat services)</li>
+<li><strong>SSD:</strong> 100GB+ NVMe SSD</li>
+</ul>
+<h2 id="install-prerequisites">Install Prerequisites<a class="headerlink" href="#install-prerequisites" title="Permanent link">&para;</a></h2>
+<h3 id="docker-docker-compose">Docker &amp; Docker Compose<a class="headerlink" href="#docker-docker-compose" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Ubuntu/Debian</label><label for="__tabbed_1_2">macOS</label><label for="__tabbed_1_3">Windows</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1"># Install Docker</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>update
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>docker.io<span class="w"> </span>docker-compose
+
+<span class="c1"># Add your user to docker group (optional, avoids sudo)</span>
+sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+newgrp<span class="w"> </span>docker
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1"># Using Homebrew</span>
+brew<span class="w"> </span>install<span class="w"> </span>docker<span class="w"> </span>docker-compose
+
+<span class="c1"># Or download Docker Desktop from docker.com</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<ol>
+<li>Download <a href="https://www.docker.com/products/docker-desktop">Docker Desktop for Windows</a></li>
+<li>Install with WSL2 backend</li>
+<li>Enable WSL2 in Windows Features</li>
+<li>Restart your computer</li>
+</ol>
+</div>
+</div>
+</div>
+<h3 id="nodejs-optional-for-local-frontend-development">Node.js (Optional - for local frontend development)<a class="headerlink" href="#nodejs-optional-for-local-frontend-development" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Using nvm (recommended)</span>
+curl<span class="w"> </span>-o-<span class="w"> </span>https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+nvm<span class="w"> </span>install<span class="w"> </span><span class="m">18</span>
+nvm<span class="w"> </span>use<span class="w"> </span><span class="m">18</span>
+
+<span class="c1"># Or using package manager</span>
+<span class="c1"># Ubuntu/Debian</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>nodejs<span class="w"> </span>npm
+
+<span class="c1"># macOS</span>
+brew<span class="w"> </span>install<span class="w"> </span>node
+
+<span class="c1"># Windows</span>
+<span class="c1"># Download from https://nodejs.org/</span>
+</code></pre></div>
+<h3 id="python-310-optional-for-local-development">Python 3.10+ (Optional - for local development)<a class="headerlink" href="#python-310-optional-for-local-development" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Ubuntu/Debian</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>python3.10<span class="w"> </span>python3-pip
+
+<span class="c1"># macOS</span>
+brew<span class="w"> </span>install<span class="w"> </span>python@3.10
+
+<span class="c1"># Windows</span>
+<span class="c1"># Download from https://python.org/</span>
+</code></pre></div>
+<h3 id="make-optional-for-using-makefile">Make (Optional - for using Makefile)<a class="headerlink" href="#make-optional-for-using-makefile" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Ubuntu/Debian</label><label for="__tabbed_2_2">macOS</label><label for="__tabbed_2_3">Windows</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>make
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1"># Included with Xcode Command Line Tools</span>
+xcode-select<span class="w"> </span>--install
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1"># Download from https://gnuwin32.sourceforge.net/packages/make.htm</span>
+<span class="c1"># Or use WSL2 with Linux installation</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="clone-the-repository">Clone the Repository<a class="headerlink" href="#clone-the-repository" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/voicera/voicera.git
+<span class="nb">cd</span><span class="w"> </span>voicera_mono_repository
+
+<span class="c1"># Verify structure</span>
+ls<span class="w"> </span>-la<span class="w">  </span><span class="c1"># Check for docker-compose.yml, Makefile, etc.</span>
+</code></pre></div>
+<h2 id="environment-setup">Environment Setup<a class="headerlink" href="#environment-setup" title="Permanent link">&para;</a></h2>
+<h3 id="1-backend-configuration">1. Backend Configuration<a class="headerlink" href="#1-backend-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Copy example environment file</span>
+cp<span class="w"> </span>voicera_backend/env.example<span class="w"> </span>voicera_backend/.env
+
+<span class="c1"># Edit with your configuration</span>
+nano<span class="w"> </span>voicera_backend/.env<span class="w">  </span><span class="c1"># or use your preferred editor</span>
+</code></pre></div>
+<p>Key environment variables to configure:</p>
+<div class="highlight"><pre><span></span><code># Database
+MONGODB_HOST=mongodb
+MONGODB_PORT=27017
+MONGODB_USER=admin
+MONGODB_PASSWORD=admin123
+
+# Storage
+MINIO_HOST=minio
+MINIO_PORT=9000
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+
+# JWT
+JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+</code></pre></div>
+<h3 id="2-voice-server-configuration">2. Voice Server Configuration<a class="headerlink" href="#2-voice-server-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Copy example environment file</span>
+cp<span class="w"> </span>voice_2_voice_server/.env.example<span class="w"> </span>voice_2_voice_server/.env
+
+<span class="c1"># Edit with your API keys</span>
+nano<span class="w"> </span>voice_2_voice_server/.env
+</code></pre></div>
+<p>Required API keys:</p>
+<div class="highlight"><pre><span></span><code># Vobiz Telephony
+VOBIZ_API_BASE=https://api.vobiz.ai/api/v1
+VOBIZ_AUTH_ID=your_auth_id
+VOBIZ_AUTH_PASSWORD=your_auth_password
+
+# LLM Provider (choose one)
+OPENAI_API_KEY=sk-...  # For OpenAI
+
+# STT Provider (choose one)
+DEEPGRAM_API_KEY=...   # For Deepgram
+
+# TTS Provider (choose one)
+CARTESIA_API_KEY=...   # For Cartesia
+</code></pre></div>
+<h3 id="optional-ngrok-expose-local-voice-server">Optional: Ngrok (Expose Local Voice Server)<a class="headerlink" href="#optional-ngrok-expose-local-voice-server" title="Permanent link">&para;</a></h3>
+<p>If you need to expose your local <code>voice_2_voice_server</code> to the public internet (for testing webhooks, external integrations or remote callbacks), you can use Ngrok to create a public URL that tunnels to your local port.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Ngrok setup:</span>
+
+<span class="c1"># Install pyngrok (optional helper) or the ngrok CLI</span>
+<span class="c1"># Python helper (optional):</span>
+pip<span class="w"> </span>install<span class="w"> </span>pyngrok
+
+<span class="c1"># Or download the ngrok CLI from https://ngrok.com and install it</span>
+
+<span class="c1"># Authenticate ngrok with your token (get it from https://ngrok.com)</span>
+ngrok<span class="w"> </span>config<span class="w"> </span>add-authtoken<span class="w"> </span>&lt;YOUR_AUTH_TOKEN&gt;
+
+<span class="c1"># Start your local server and forward the port (example uses 7860)</span>
+ngrok<span class="w"> </span>http<span class="w"> </span><span class="m">7860</span>
+
+<span class="c1"># Ngrok will print a public URL like:</span>
+<span class="c1"># https://abcd-12-34-56-78.ngrok-free.app</span>
+</code></pre></div>
+<p>Copy the generated public URL and add it to your <code>voice_2_voice_server/.env</code> as follows:</p>
+<div class="highlight"><pre><span></span><code># Johnaic / external webhook (example)
+JOHNAIC_SERVER_URL=&quot;https://abcd-12-34-56-78.ngrok-free.app&quot;
+JOHNAIC_WEBSOCKET_URL=&quot;ws://abcd-12-34-56-78.ngrok-free.app&quot;
+</code></pre></div>
+<p>If ngrok provides a secure websocket endpoint use <code>wss://</code> for <code>JOHNAIC_WEBSOCKET_URL</code> (recommended).</p>
+<p>Note: Keep these URLs private; they allow external access to your local server while the tunnel is active.</p>
+<h3 id="3-frontend-configuration">3. Frontend Configuration<a class="headerlink" href="#3-frontend-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Copy example environment file</span>
+cp<span class="w"> </span>voicera_frontend/.env.example<span class="w"> </span>voicera_frontend/.env.local
+
+<span class="c1"># Edit configuration</span>
+nano<span class="w"> </span>voicera_frontend/.env.local
+</code></pre></div>
+<div class="highlight"><pre><span></span><code># API Configuration
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_VOICE_SERVER_URL=http://localhost:7860
+
+# Authentication
+NEXT_PUBLIC_AUTH_ENABLED=true
+</code></pre></div>
+<h2 id="verify-installation">Verify Installation<a class="headerlink" href="#verify-installation" title="Permanent link">&para;</a></h2>
+<h3 id="check-docker-installation">Check Docker Installation<a class="headerlink" href="#check-docker-installation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Verify Docker version</span>
+docker<span class="w"> </span>--version
+<span class="c1"># Output: Docker version 20.10.x, build ...</span>
+
+<span class="c1"># Verify Docker Compose</span>
+docker-compose<span class="w"> </span>--version
+<span class="c1"># Output: Docker Compose version 1.29.x, ...</span>
+
+<span class="c1"># Test Docker</span>
+docker<span class="w"> </span>run<span class="w"> </span>hello-world
+</code></pre></div>
+<h3 id="check-python-installation-optional">Check Python Installation (Optional)<a class="headerlink" href="#check-python-installation-optional" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>--version
+<span class="c1"># Output: Python 3.10.x</span>
+</code></pre></div>
+<h3 id="check-nodejs-installation-optional">Check Node.js Installation (Optional)<a class="headerlink" href="#check-nodejs-installation-optional" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>node<span class="w"> </span>--version
+<span class="c1"># Output: v18.x.x</span>
+
+npm<span class="w"> </span>--version
+<span class="c1"># Output: 9.x.x</span>
+</code></pre></div>
+<h2 id="build-docker-images">Build Docker Images<a class="headerlink" href="#build-docker-images" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Build all services</span>
+make<span class="w"> </span>build-all-services
+
+<span class="c1"># Or manually</span>
+docker-compose<span class="w"> </span>build
+</code></pre></div>
+<p>This will build images for:
+- Frontend (Next.js)
+- Backend (FastAPI)
+- Voice Server (Pipecat)
+- AI4Bharat STT (optional)
+- AI4Bharat TTS (optional)</p>
+<h2 id="verify-build">Verify Build<a class="headerlink" href="#verify-build" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># List Docker images</span>
+docker<span class="w"> </span>images<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>voicera
+
+<span class="c1"># Expected output:</span>
+<span class="c1"># voicera_mono_repository_frontend   latest    ...</span>
+<span class="c1"># voicera_mono_repository_backend    latest    ...</span>
+<span class="c1"># voicera_mono_repository_voice_server latest ...</span>
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><a href="../quickstart/">Quick Start</a></strong> - Start all services and access the application</li>
+<li><strong><a href="../configuration/">Configuration Guide</a></strong> - Learn about all configuration options</li>
+<li><strong><a href="../../architecture/overview/">Architecture Overview</a></strong> - Understand the system</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="docker-daemon-not-running">Docker daemon not running<a class="headerlink" href="#docker-daemon-not-running" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Linux</label><label for="__tabbed_3_2">macOS</label><label for="__tabbed_3_3">Windows</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>docker
+sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>docker<span class="w">  </span><span class="c1"># Auto-start on boot</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>Open Docker Desktop from Applications</p>
+</div>
+<div class="tabbed-block">
+<p>Open Docker Desktop from Start Menu</p>
+</div>
+</div>
+</div>
+<h3 id="permission-denied-errors">Permission denied errors<a class="headerlink" href="#permission-denied-errors" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Add current user to docker group</span>
+sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+newgrp<span class="w"> </span>docker
+
+<span class="c1"># Log out and back in for changes to take effect</span>
+</code></pre></div>
+<h3 id="port-already-in-use">Port already in use<a class="headerlink" href="#port-already-in-use" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Find and kill process using port (example: 8000)</span>
+lsof<span class="w"> </span>-i<span class="w"> </span>:8000
+<span class="nb">kill</span><span class="w"> </span>-9<span class="w"> </span>&lt;PID&gt;
+
+<span class="c1"># Or modify port in docker-compose.yml</span>
+</code></pre></div>
+<h3 id="out-of-disk-space">Out of disk space<a class="headerlink" href="#out-of-disk-space" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Clean up Docker resources</span>
+docker<span class="w"> </span>system<span class="w"> </span>prune<span class="w"> </span>-a
+
+<span class="c1"># Remove unused volumes</span>
+docker<span class="w"> </span>volume<span class="w"> </span>prune
+</code></pre></div>
+<h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Check <a href="../../troubleshooting/">Troubleshooting Guide</a></li>
+<li>Read <a href="https://docs.docker.com/">Docker Documentation</a></li>
+<li>Visit <a href="https://github.com/voicera/voicera/discussions">GitHub Discussions</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
