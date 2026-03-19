@@ -31,6 +31,8 @@ from config import get_llm_model
 from config.stt_mappings import STT_LANGUAGE_MAP
 from config.tts_mappings import TTS_LANGUAGE_MAP
 
+from .backend_utils import fetch_integration_key
+
 
 class ServiceCreationError(Exception):
     """Raised when a service cannot be created."""
@@ -41,6 +43,7 @@ def create_llm_service(
     llm_config: dict,
     vistaar_session_id: Optional[str] = None,
     language: Optional[str] = None,
+    org_id: Optional[str] = None,
 ) -> Any:
     """Create an LLM service based on configuration.
 
@@ -48,6 +51,7 @@ def create_llm_service(
         llm_config: LLM configuration dict with 'name' and optional 'args'
         vistaar_session_id: Optional session ID for Kenpath/Vistaar
         language: Optional agent language (e.g. "hindi", "marathi") for Kenpath
+        org_id: Optional organization ID to fetch integration API key from backend
 
     Returns:
         Configured LLM service instance
@@ -60,13 +64,22 @@ def create_llm_service(
     model = args.get("model") or llm_config.get("model")
 
     if provider == "OpenAI":
+        if org_id:
+            api_key = fetch_integration_key(org_id, "OpenAI")
+            if not api_key:
+                raise ServiceCreationError(
+                    "OpenAI API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("OPENAI_API_KEY")
+
         # Extract user aggregator params from config, with defaults
         user_aggregator_params = LLMUserAggregatorParams(
             aggregation_timeout=args.get("aggregation_timeout", 0.05)
         )
 
         service = OpenAILLMService(
-            api_key=os.getenv("OPENAI_API_KEY"),
+            api_key=api_key,
             model=get_llm_model(provider, model),
         )
 
@@ -83,13 +96,19 @@ def create_llm_service(
         raise ServiceCreationError(f"Unknown LLM provider: {provider}")
 
 
-def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = None) -> Any:
+def create_stt_service(
+    stt_config: dict,
+    sample_rate: int,
+    vad_analyzer: Any = None,
+    org_id: Optional[str] = None,
+) -> Any:
     """Create an STT service based on configuration.
     
     Args:
         stt_config: STT configuration dict with 'name', 'language', and optional 'args'
         sample_rate: Audio sample rate in Hz
         vad_analyzer: Optional VAD analyzer instance for direct state monitoring
+        org_id: Optional organization ID to fetch integration API key from backend
         
     Returns:
         Configured STT service instance
@@ -114,9 +133,16 @@ def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = N
     provider = provider_map.get(provider.lower(), provider)
     
     if provider == "ElevenLabs":
-        api_key = os.getenv("ELEVENLABS_API_KEY")
-        if not api_key:
-            raise ServiceCreationError("ELEVENLABS_API_KEY is required for ElevenLabs STT")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "ElevenLabs")
+            if not api_key:
+                raise ServiceCreationError(
+                    "ElevenLabs API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("ELEVENLABS_API_KEY")
+            if not api_key:
+                raise ServiceCreationError("ELEVENLABS_API_KEY is required for ElevenLabs STT")
         raw_model = args.get("model") or stt_config.get("model")
         # ElevenLabs API expects model_id with underscores (e.g. scribe_v2_realtime), not hyphens
         model = (
@@ -148,8 +174,16 @@ def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = N
     
     if provider == "Deepgram":
         model = args.get("model")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Deepgram")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Deepgram API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("DEEPGRAM_API_KEY")
         return DeepgramSTTService(
-            api_key=os.getenv("DEEPGRAM_API_KEY"),
+            api_key=api_key,
             sample_rate=sample_rate,
             live_options=LiveOptions(
                 model=model,
@@ -174,8 +208,16 @@ def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = N
         )
     
     elif provider == "OpenAI":
+        if org_id:
+            api_key = fetch_integration_key(org_id, "OpenAI")
+            if not api_key:
+                raise ServiceCreationError(
+                    "OpenAI API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("OPENAI_API_KEY")
         return OpenAISTTService(
-            api_key=os.getenv("OPENAI_API_KEY"),
+            api_key=api_key,
             language=STT_LANGUAGE_MAP[provider][language]
         )
     
@@ -192,8 +234,16 @@ def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = N
             raise ServiceCreationError(f"Unknown ai4bharat STT model: {model}. Expected 'indic-conformer-stt'")
     
     elif provider == "Bhashini":
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Bhashini")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Bhashini API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("BHASHINI_API_KEY")
         return BhashiniSTTService(
-            api_key=os.getenv("BHASHINI_API_KEY"),
+            api_key=api_key,
             language=STT_LANGUAGE_MAP[provider][language],
             service_id=args.get("model", "bhashini/ai4bharat/conformer-multilingual-asr"),
             sample_rate=sample_rate,
@@ -201,8 +251,16 @@ def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = N
     
     elif provider == "Sarvam":
         model = args.get("model")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Sarvam")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Sarvam API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("SARVAM_API_KEY")
         return SarvamSTTService(
-            api_key=os.getenv("SARVAM_API_KEY"),
+            api_key=api_key,
             language=STT_LANGUAGE_MAP[provider][language],
             model=model,
             sample_rate=sample_rate
@@ -212,12 +270,17 @@ def create_stt_service(stt_config: dict, sample_rate: int, vad_analyzer: Any = N
         raise ServiceCreationError(f"Unknown STT provider: {provider}")
 
 
-def create_tts_service(tts_config: dict, sample_rate: int) -> Any:
+def create_tts_service(
+    tts_config: dict,
+    sample_rate: int,
+    org_id: Optional[str] = None,
+) -> Any:
     """Create a TTS service based on configuration.
     
     Args:
         tts_config: TTS configuration dict with 'name', 'language', and optional 'args'
         sample_rate: Audio sample rate in Hz (used for some services)
+        org_id: Optional organization ID to fetch integration API key from backend
         
     Returns:
         Configured TTS service instance
@@ -243,9 +306,16 @@ def create_tts_service(tts_config: dict, sample_rate: int) -> Any:
     provider = provider_map.get(provider.lower(), provider)
     
     if provider == "ElevenLabs":
-        api_key = os.getenv("ELEVENLABS_API_KEY")
-        if not api_key:
-            raise ServiceCreationError("ELEVENLABS_API_KEY is required for ElevenLabs TTS")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "ElevenLabs")
+            if not api_key:
+                raise ServiceCreationError(
+                    "ElevenLabs API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("ELEVENLABS_API_KEY")
+            if not api_key:
+                raise ServiceCreationError("ELEVENLABS_API_KEY is required for ElevenLabs TTS")
         voice_id = (
             args.get("voice_id")
             or args.get("voice")
@@ -288,8 +358,16 @@ def create_tts_service(tts_config: dict, sample_rate: int) -> Any:
     if provider == "Cartesia":
         model = args.get("model")
         voice_id = args.get("voice_id")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Cartesia")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Cartesia API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("CARTESIA_API_KEY")
         return CartesiaTTSService(
-            api_key=os.getenv("CARTESIA_API_KEY"),
+            api_key=api_key,
             model=model,
             encoding="pcm_s16le",
             voice_id=voice_id
@@ -306,8 +384,16 @@ def create_tts_service(tts_config: dict, sample_rate: int) -> Any:
     
     elif provider == "OpenAI":
         voice = args.get("voice") or tts_config.get("voice_id")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "OpenAI")
+            if not api_key:
+                raise ServiceCreationError(
+                    "OpenAI API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("OPENAI_API_KEY")
         return OpenAITTSService(
-            api_key=os.getenv("OPENAI_API_KEY"),
+            api_key=api_key,
             voice=voice
         )
     
@@ -339,8 +425,16 @@ def create_tts_service(tts_config: dict, sample_rate: int) -> Any:
         pitch = args.get("pitch")
         pace = args.get("pace")
         loudness = args.get("loudness")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Sarvam")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Sarvam API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("SARVAM_API_KEY")
         return SarvamTTSService(
-            api_key=os.getenv("SARVAM_API_KEY"),
+            api_key=api_key,
             target_language_code=TTS_LANGUAGE_MAP[provider][language],
             model=model,
             speaker=speaker,
@@ -350,9 +444,16 @@ def create_tts_service(tts_config: dict, sample_rate: int) -> Any:
         )
 
     elif provider == "Deepgram":
-        api_key = os.getenv("DEEPGRAM_API_KEY")
-        if not api_key:
-            raise ServiceCreationError("DEEPGRAM_API_KEY is required for Deepgram TTS")
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Deepgram")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Deepgram API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("DEEPGRAM_API_KEY")
+            if not api_key:
+                raise ServiceCreationError("DEEPGRAM_API_KEY is required for Deepgram TTS")
         raw_voice = (
             args.get("voice")
             or args.get("voice_id")
