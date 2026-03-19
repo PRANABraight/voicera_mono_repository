@@ -217,8 +217,9 @@ export default function IntegrationsPage() {
     })
   }, [searchQuery, activeTab, connectedProviders])
 
-  // Open connect modal
+  // Open connect modal (clear search so browser autocomplete doesn't fill it with login email)
   const openConnectModal = (provider: Provider) => {
+    setSearchQuery("")
     setSelectedProvider(provider)
     setModalApiKey("")
     setIsModalKeyVisible(false)
@@ -400,10 +401,14 @@ export default function IntegrationsPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                type="search"
+                name="provider-search"
                 placeholder="Search providers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
+                autoComplete="off"
+                aria-label="Search providers"
               />
             </div>
 
@@ -552,6 +557,7 @@ export default function IntegrationsPage() {
                   value={modalApiKey}
                   onChange={(e) => setModalApiKey(e.target.value)}
                   className="pr-10"
+                  autoComplete="off"
                 />
                 <Button
                   type="button"

@@ -163,14 +163,17 @@ async def run_bot(
                 stt_config["language"] = language
             if not tts_config.get("language"):
                 tts_config["language"] = language
+
+        org_id = agent_config.get("org_id")
      
         llm = create_llm_service(
             llm_config,
             vistaar_session_id=vistaar_session_id,
             language=agent_config.get("language"),
+            org_id=org_id,
         )
-        stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer)
-        tts = create_tts_service(tts_config, sample_rate)
+        stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer, org_id=org_id)
+        tts = create_tts_service(tts_config, sample_rate, org_id=org_id)
         
         # Use fast aggregator (no lookahead/NLTK) for lower latency
         tts._aggregate_sentences = True
