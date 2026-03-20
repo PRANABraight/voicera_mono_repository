@@ -104,9 +104,12 @@ const providers: Provider[] = [
     capabilities: ["llm"],
     description: "Ultra-fast LLM inference",
   },
-  
-  
-  
+  {
+    id: "grok",
+    name: "Grok",
+    capabilities: ["llm"],
+    description: "x.AI Grok models with OpenAI-compatible API",
+  },
 ]
 
 // Capability configuration

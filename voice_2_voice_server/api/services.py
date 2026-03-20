@@ -9,6 +9,7 @@ from deepgram import LiveOptions
 # Pipecat services
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.services.anthropic.llm import AnthropicLLMService
+from pipecat.services.grok.llm import GrokLLMService
 from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.deepgram.tts import DeepgramTTSService
@@ -125,6 +126,26 @@ def create_llm_service(
         user_aggregator_params = LLMUserAggregatorParams(
             aggregation_timeout=args.get("aggregation_timeout", 0.05)
         )
+        service._user_aggregator_params = user_aggregator_params
+        return service
+    elif provider_normalized == "Grok":
+        if org_id:
+            api_key = fetch_integration_key(org_id, "Grok")
+            if not api_key:
+                raise ServiceCreationError(
+                    "Grok API key must be configured in Integrations for this organization."
+                )
+        else:
+            api_key = os.getenv("XAI_API_KEY") or os.getenv("GROK_API_KEY")
+            if not api_key:
+                raise ServiceCreationError(
+                    "XAI_API_KEY or GROK_API_KEY is required for Grok LLM"
+                )
+        resolved_model = get_llm_model("Grok", model)
+        user_aggregator_params = LLMUserAggregatorParams(
+            aggregation_timeout=args.get("aggregation_timeout", 0.05)
+        )
+        service = GrokLLMService(api_key=api_key, model=resolved_model)
         service._user_aggregator_params = user_aggregator_params
         return service
     else:

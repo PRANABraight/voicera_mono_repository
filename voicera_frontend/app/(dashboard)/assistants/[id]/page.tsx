@@ -76,6 +76,8 @@ const getProviderOfficialName = (providerId: string): string => {
     cartesia: "Cartesia",
     openai: "OpenAI",
     playht: "PlayHT",
+    groq: "Groq",
+    grok: "Grok",
   }
   return nameMap[providerId] || providerId.charAt(0).toUpperCase() + providerId.slice(1)
 }
@@ -100,6 +102,8 @@ const getProviderIdFromName = (providerName: string): string => {
     "Cartesia": "cartesia",
     "OpenAI": "openai",
     "PlayHT": "playht",
+    "Groq": "groq",
+    "Grok": "grok",
   }
   return reverseMap[providerName] || providerName.toLowerCase()
 }
@@ -161,6 +165,14 @@ const llmProviders = {
       "llama-3.3-70b-versatile",
       "llama-3.1-8b-instant",
       "mixtral-8x7b-32768",
+    ],
+  },
+  grok: {
+    name: "Grok",
+    models: [
+      "grok-3-beta",
+      "grok-2-1212",
+      "grok-2-vision-1212",
     ],
   },
 }
