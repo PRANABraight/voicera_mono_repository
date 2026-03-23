@@ -36,6 +36,14 @@ class KnowledgeChromaDeleteError(Exception):
         self.message = message
 
 
+class KnowledgeRetrievalError(Exception):
+    """Knowledge retrieval failed for the current query."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
 def _org_chroma_subdir(org_id: str) -> str:
     """Stable filesystem-safe directory name per org."""
     return hashlib.sha256(org_id.encode("utf-8")).hexdigest()[:48]
@@ -129,6 +137,128 @@ def list_documents(org_id: str) -> List[dict]:
     for doc in cursor:
         doc.pop("_id", None)
         out.append(doc)
+    return out
+
+
+def retrieve_chunks_for_query(
+    *,
+    org_id: str,
+    question: str,
+    document_ids: Optional[List[str]] = None,
+    top_k: int = 3,
+) -> List[dict]:
+    """
+    Retrieve top-k relevant chunk texts from org-scoped Chroma.
+
+    Uses OpenAI query embeddings and Chroma ANN query on ``rag_docs``.
+    If ``document_ids`` are provided, retrieval is constrained to those documents.
+    """
+    query = (question or "").strip()
+    if not query:
+        return []
+
+    # Safety belt: if the caller explicitly passed an empty list, do not
+    # fall back to "search across all docs".
+    if document_ids is not None and len(document_ids) == 0:
+        return []
+
+    k = max(1, min(int(top_k or 3), 10))
+    selected_ids = [d.strip() for d in (document_ids or []) if d and d.strip()]
+
+    api_key = resolve_openai_key_for_org(org_id)
+    if not api_key:
+        raise KnowledgeRetrievalError(
+            "No OpenAI API key: add Integrations 'OpenAI' or OPENAI_API_KEY."
+        )
+
+    chroma_dir = chroma_dir_for_org(org_id)
+    if not chroma_dir.is_dir():
+        return []
+
+    try:
+        import chromadb
+        from openai import OpenAI
+    except ImportError as e:
+        raise KnowledgeRetrievalError(
+            "RAG dependencies not installed in the backend process."
+        ) from e
+
+    client = OpenAI(api_key=api_key)
+    try:
+        emb_resp = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=query,
+        )
+        q_emb = list(emb_resp.data[0].embedding)
+    except Exception as e:
+        raise KnowledgeRetrievalError(f"Embedding failed: {e}") from e
+
+    try:
+        chroma = chromadb.PersistentClient(path=str(chroma_dir.resolve()))
+        collection = chroma.get_collection(name="rag_docs")
+    except Exception:
+        return []
+
+    include = ["documents", "distances", "metadatas"]
+    n_results = max(k, min(25, k * 4 if selected_ids else k))
+    where = {"document_id": {"$in": selected_ids}} if selected_ids else None
+    results = None
+    try:
+        if where:
+            results = collection.query(
+                query_embeddings=[q_emb],
+                n_results=n_results,
+                include=include,
+                where=where,
+            )
+        else:
+            results = collection.query(
+                query_embeddings=[q_emb],
+                n_results=n_results,
+                include=include,
+            )
+    except Exception:
+        # Fallback for older Chroma filtering behavior.
+        try:
+            results = collection.query(
+                query_embeddings=[q_emb],
+                n_results=n_results,
+                include=include,
+            )
+        except Exception as e:
+            raise KnowledgeRetrievalError(f"Chroma query failed: {e}") from e
+
+    ids_batch = results.get("ids") or []
+    docs_batch = results.get("documents") or []
+    dists_batch = results.get("distances") or []
+    metas_batch = results.get("metadatas") or []
+    if not ids_batch or not ids_batch[0]:
+        return []
+
+    ids = ids_batch[0]
+    docs = docs_batch[0] if docs_batch else []
+    dists = dists_batch[0] if dists_batch else [None] * len(ids)
+    metas = metas_batch[0] if metas_batch else [None] * len(ids)
+    out: List[dict] = []
+    for cid, doc, dist, meta in zip(ids, docs, dists, metas, strict=False):
+        metadata = meta or {}
+        doc_id = metadata.get("document_id") or metadata.get("chunk_id_prefix")
+        if selected_ids and doc_id not in selected_ids:
+            continue
+        text = (doc or "").strip()
+        if not text:
+            continue
+        out.append(
+            {
+                "chunk_id": cid,
+                "document_id": doc_id,
+                "source_filename": metadata.get("source_filename"),
+                "text": text,
+                "distance": dist,
+            }
+        )
+        if len(out) >= k:
+            break
     return out
 
 

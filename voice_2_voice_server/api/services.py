@@ -29,6 +29,7 @@ from services.ai4bharat.tts import IndicParlerRESTTTSService
 from services.ai4bharat.stt import IndicConformerRESTSTTService
 from services.bhashini.stt import BhashiniSTTService
 from services.bhashini.tts import BhashiniTTSService
+from services.openai_kb_llm import OpenAIKnowledgeLLMService
 from config import get_llm_model
 from config.stt_mappings import STT_LANGUAGE_MAP
 from config.tts_mappings import TTS_LANGUAGE_MAP
@@ -84,9 +85,17 @@ def create_llm_service(
             aggregation_timeout=args.get("aggregation_timeout", 0.05)
         )
 
-        service = OpenAILLMService(
+        knowledge_enabled = bool(llm_config.get("knowledge_base_enabled", False))
+        knowledge_document_ids = llm_config.get("knowledge_document_ids") or []
+        knowledge_top_k = llm_config.get("knowledge_top_k", 3)
+
+        service = OpenAIKnowledgeLLMService(
             api_key=api_key,
             model=get_llm_model(provider_normalized, model),
+            org_id=org_id,
+            knowledge_enabled=knowledge_enabled,
+            knowledge_document_ids=knowledge_document_ids,
+            knowledge_top_k=knowledge_top_k,
         )
 
         # Store user aggregator params on the service instance for later use

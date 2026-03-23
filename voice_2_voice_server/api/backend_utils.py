@@ -74,6 +74,44 @@ def fetch_integration_key(org_id: str, model: str) -> Optional[str]:
         return None
 
 
+def fetch_knowledge_chunks(
+    *,
+    org_id: str,
+    question: str,
+    document_ids: Optional[list[str]] = None,
+    top_k: int = 3,
+    timeout: float = 0.8,
+) -> list[dict]:
+    """
+    Retrieve top-k knowledge chunks for runtime RAG augmentation.
+
+    Uses internal API-key auth and returns an empty list on failures (fail-open).
+    """
+    backend_url = _get_backend_url()
+    api_endpoint = f"{backend_url}/api/v1/rag/retrieve"
+    headers = _get_api_headers()
+    payload = {
+        "org_id": org_id,
+        "question": question,
+        "top_k": top_k,
+        "document_ids": document_ids or [],
+    }
+    try:
+        response = requests.post(
+            api_endpoint,
+            json=payload,
+            headers=headers,
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        data = response.json()
+        chunks = data.get("chunks") if isinstance(data, dict) else []
+        return chunks if isinstance(chunks, list) else []
+    except Exception as e:
+        logger.debug("Knowledge retrieval failed: %s", e)
+        return []
+
+
 async def fetch_agent_config_from_backend(agent_id: str) -> dict:
     """
     Fetch agent configuration from backend API.

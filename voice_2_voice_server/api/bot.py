@@ -153,9 +153,18 @@ async def run_bot(
     logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
     
     try:
-        llm_config = agent_config.get("llm_model", {})
+        llm_config = dict(agent_config.get("llm_model", {}) or {})
         stt_config = agent_config.get("stt_model", {})
         tts_config = agent_config.get("tts_model", {})
+        llm_provider_name = str(llm_config.get("name") or "").strip().lower()
+        if llm_provider_name == "openai":
+            llm_config["knowledge_base_enabled"] = bool(
+                agent_config.get("knowledge_base_enabled", False)
+            )
+            llm_config["knowledge_document_ids"] = list(
+                agent_config.get("knowledge_document_ids") or []
+            )
+            llm_config["knowledge_top_k"] = int(agent_config.get("knowledge_top_k", 3) or 3)
         
         language = agent_config.get("language")
         if language:

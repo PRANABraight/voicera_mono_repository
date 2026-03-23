@@ -341,3 +341,25 @@ class KnowledgeDeleteResponse(BaseModel):
     """Response after deleting a knowledge document."""
     deleted: bool
 
+
+class KnowledgeRetrieveRequest(BaseModel):
+    """Request payload for retrieving knowledge chunks for a query."""
+    org_id: str
+    question: str
+    top_k: int = 3
+    document_ids: Optional[List[str]] = None
+
+
+class KnowledgeRetrievedChunk(BaseModel):
+    """One retrieved chunk from Chroma."""
+    chunk_id: Optional[str] = None
+    document_id: Optional[str] = None
+    source_filename: Optional[str] = None
+    text: str
+    distance: Optional[float] = None
+
+
+class KnowledgeRetrieveResponse(BaseModel):
+    """Response payload for knowledge retrieval."""
+    chunks: List[KnowledgeRetrievedChunk]
+
