@@ -59,9 +59,17 @@ If you prefer to run the application locally (without Docker):
 
 ### 1. Install Dependencies
 
+Use a virtual environment (recommended on Linux; system Python may block global `pip`):
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+This installs **Knowledge Base / RAG** packages too (`chromadb`, `openai`, `pypdf`, etc.). Run the API with the same environment (`python run.py` after `activate`, or `.venv/bin/python run.py`).
+
+**Alternative:** run [`rag_system/rag_server.py`](rag_system/rag_server.py) on port 8090 (venv with full `requirements.txt`), and set `RAG_INGEST_SERVICE_URL=http://127.0.0.1:8090` in `.env`. The main API will forward PDF ingests to that service so the main process does not need `chromadb` installed.
 
 ### 2. Setup Environment
 

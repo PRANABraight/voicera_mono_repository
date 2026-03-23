@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import connect_to_mongo, close_mongo_connection
-from app.routers import users, agents, meetings, campaigns, audience, call_recordings, phone_numbers, vobiz, analytics, integrations, members
+from app.routers import users, agents, meetings, campaigns, audience, call_recordings, phone_numbers, vobiz, analytics, integrations, members, knowledge
 import logging
 
 # Configure logging
@@ -45,6 +45,7 @@ app.include_router(vobiz.router, prefix=settings.API_V1_PREFIX)
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
 app.include_router(integrations.router, prefix=settings.API_V1_PREFIX)
 app.include_router(members.router, prefix=settings.API_V1_PREFIX)
+app.include_router(knowledge.router, prefix=settings.API_V1_PREFIX)
 
 @app.on_event("startup")
 async def startup_event():

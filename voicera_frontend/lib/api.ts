@@ -719,6 +719,114 @@ export async function deleteIntegration(model: string): Promise<{ status: string
   return response.json()
 }
 
+// Knowledge base (org-scoped PDF ingest)
+export interface KnowledgeDocument {
+  document_id: string
+  org_id: string
+  original_filename: string
+  status: "processing" | "ready" | "failed"
+  chunk_count?: number | null
+  embedding_model?: string | null
+  error_message?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export interface KnowledgeUploadResponse {
+  document_id: string
+  org_id: string
+  original_filename: string
+  status: string
+}
+
+export interface KnowledgeDeleteResponse {
+  deleted: boolean
+}
+
+/**
+ * List knowledge PDFs for the current organization (JWT).
+ */
+export async function getKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
+  const response = await fetchApiRoute("/api/knowledge-base")
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      (error as { detail?: string }).detail ||
+        (error as { error?: string }).error ||
+        "Failed to fetch knowledge documents"
+    )
+  }
+
+  return response.json()
+}
+
+/**
+ * Upload a PDF for background ingest (multipart). Do not set Content-Type manually.
+ */
+export async function uploadKnowledgePdf(
+  file: File,
+  orgId: string
+): Promise<KnowledgeUploadResponse> {
+  const token = getAuthToken()
+  if (!token) {
+    throw new Error("No authentication token found")
+  }
+
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("org_id", orgId)
+
+  const response = await fetch("/api/knowledge-base", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (response.status === 401) {
+    clearAuth()
+    if (typeof window !== "undefined") {
+      window.location.href = "/"
+    }
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      (error as { detail?: string }).detail ||
+        (error as { error?: string }).error ||
+        "Failed to upload knowledge PDF"
+    )
+  }
+
+  return response.json()
+}
+
+/**
+ * Delete a knowledge document and its indexed chunks (JWT org from token).
+ */
+export async function deleteKnowledgeDocument(
+  documentId: string
+): Promise<KnowledgeDeleteResponse> {
+  const encodedId = encodeURIComponent(documentId)
+  const response = await fetchApiRoute(`/api/knowledge-base/${encodedId}`, {
+    method: "DELETE",
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      (error as { detail?: string }).detail ||
+        (error as { error?: string }).error ||
+        "Failed to delete knowledge document"
+    )
+  }
+
+  return response.json()
+}
+
 // Member types
 export interface Member {
   email: string

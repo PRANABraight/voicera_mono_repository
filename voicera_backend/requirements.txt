@@ -12,3 +12,9 @@ mailtrap>=2.0.0
 minio>=7.2.0
 httpx>=0.25.0
 
+# RAG / knowledge (rag_system scripts + rag_server)
+chromadb>=0.4.0
+openai>=1.0.0
+numpy>=1.24.0
+pypdf>=4.0.0
+
