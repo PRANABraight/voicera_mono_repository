@@ -65,23 +65,13 @@ class OpenAIKnowledgeLLMService(OpenAILLMService):
             timeout=0.8,
         )
         if not chunks:
-            # Fail-closed behavior for KB-enabled + explicit selection:
-            # when Chroma returns no excerpts, we should not answer "normally"
-            # using the LLM's general knowledge.
-            original = messages[user_index].get("content")
-            no_excerpts_augmented = (
-                f"User question:\n{user_text}\n\n"
-                "Knowledge Base excerpts:\n(none found for the selected knowledge documents)\n\n"
-                "You must respond that you do not have enough information from the provided knowledge to answer."
+            # Graceful fallback: no relevant KB excerpts found.
+            # Let the LLM respond naturally using its system prompt / persona
+            # instead of forcing a "no info available" dead-end.
+            logger.debug(
+                "OpenAI KB retrieval returned 0 excerpts; falling back to natural LLM response"
             )
-            messages[user_index]["content"] = no_excerpts_augmented
-            try:
-                return await super()._process_context(context)
-            finally:
-                messages[user_index]["content"] = original
-                logger.debug(
-                    "OpenAI KB retrieval returned 0 excerpts; fail-closed response"
-                )
+            return await super()._process_context(context)
 
         excerpt_lines: list[str] = []
         for idx, chunk in enumerate(chunks, start=1):
