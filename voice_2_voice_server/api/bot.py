@@ -153,9 +153,18 @@ async def run_bot(
     logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
     
     try:
-        llm_config = agent_config.get("llm_model", {})
+        llm_config = dict(agent_config.get("llm_model", {}) or {})
         stt_config = agent_config.get("stt_model", {})
         tts_config = agent_config.get("tts_model", {})
+        llm_provider_name = str(llm_config.get("name") or "").strip().lower()
+        if llm_provider_name == "openai":
+            llm_config["knowledge_base_enabled"] = bool(
+                agent_config.get("knowledge_base_enabled", False)
+            )
+            llm_config["knowledge_document_ids"] = list(
+                agent_config.get("knowledge_document_ids") or []
+            )
+            llm_config["knowledge_top_k"] = int(agent_config.get("knowledge_top_k", 3) or 3)
         
         language = agent_config.get("language")
         if language:
@@ -163,14 +172,17 @@ async def run_bot(
                 stt_config["language"] = language
             if not tts_config.get("language"):
                 tts_config["language"] = language
+
+        org_id = agent_config.get("org_id")
      
         llm = create_llm_service(
             llm_config,
             vistaar_session_id=vistaar_session_id,
             language=agent_config.get("language"),
+            org_id=org_id,
         )
-        stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer)
-        tts = create_tts_service(tts_config, sample_rate)
+        stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer, org_id=org_id)
+        tts = create_tts_service(tts_config, sample_rate, org_id=org_id)
         
         # Use fast aggregator (no lookahead/NLTK) for lower latency
         tts._aggregate_sentences = True

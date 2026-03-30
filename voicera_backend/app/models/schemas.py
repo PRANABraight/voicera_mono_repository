@@ -316,3 +316,50 @@ class MemberDelete(BaseModel):
     email: EmailStr
     org_id: str
 
+# Knowledge base (org-scoped PDF ingest)
+class KnowledgeDocumentResponse(BaseModel):
+    """A knowledge PDF document and ingest status."""
+    document_id: str
+    org_id: str
+    original_filename: str
+    status: str  # processing | ready | failed
+    chunk_count: Optional[int] = None
+    embedding_model: Optional[str] = None
+    error_message: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+class KnowledgeUploadResponse(BaseModel):
+    """Response after scheduling PDF ingest."""
+    document_id: str
+    org_id: str
+    original_filename: str
+    status: str
+
+
+class KnowledgeDeleteResponse(BaseModel):
+    """Response after deleting a knowledge document."""
+    deleted: bool
+
+
+class KnowledgeRetrieveRequest(BaseModel):
+    """Request payload for retrieving knowledge chunks for a query."""
+    org_id: str
+    question: str
+    top_k: int = 3
+    document_ids: Optional[List[str]] = None
+
+
+class KnowledgeRetrievedChunk(BaseModel):
+    """One retrieved chunk from Chroma."""
+    chunk_id: Optional[str] = None
+    document_id: Optional[str] = None
+    source_filename: Optional[str] = None
+    text: str
+    distance: Optional[float] = None
+
+
+class KnowledgeRetrieveResponse(BaseModel):
+    """Response payload for knowledge retrieval."""
+    chunks: List[KnowledgeRetrievedChunk]
+
