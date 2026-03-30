@@ -60,7 +60,7 @@ const providers: Provider[] = [
     id: "sarvam",
     name: "Sarvam",
     capabilities: ["stt", "tts"],
-    description: "Indian language speech recognition and synthesis",
+    description: "Speech recognition and synthesis for English (India) and Indian languages",
   },
   {
     id: "bhashini",
@@ -73,6 +73,12 @@ const providers: Provider[] = [
     name: "Cartesia",
     capabilities: ["tts"],
     description: "Low-latency voice synthesis with emotion control",
+  },
+  {
+    id: "elevenlabs",
+    name: "ElevenLabs",
+    capabilities: ["stt", "tts"],
+    description: "Speech recognition and high-quality voice synthesis in 90+ languages",
   },
   {
     id: "openai",
@@ -98,9 +104,12 @@ const providers: Provider[] = [
     capabilities: ["llm"],
     description: "Ultra-fast LLM inference",
   },
-  
-  
-  
+  {
+    id: "grok",
+    name: "Grok",
+    capabilities: ["llm"],
+    description: "x.AI Grok models with OpenAI-compatible API",
+  },
 ]
 
 // Capability configuration
@@ -211,8 +220,9 @@ export default function IntegrationsPage() {
     })
   }, [searchQuery, activeTab, connectedProviders])
 
-  // Open connect modal
+  // Open connect modal (clear search so browser autocomplete doesn't fill it with login email)
   const openConnectModal = (provider: Provider) => {
+    setSearchQuery("")
     setSelectedProvider(provider)
     setModalApiKey("")
     setIsModalKeyVisible(false)
@@ -394,10 +404,14 @@ export default function IntegrationsPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                type="search"
+                name="provider-search"
                 placeholder="Search providers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
+                autoComplete="off"
+                aria-label="Search providers"
               />
             </div>
 
@@ -546,6 +560,7 @@ export default function IntegrationsPage() {
                   value={modalApiKey}
                   onChange={(e) => setModalApiKey(e.target.value)}
                   className="pr-10"
+                  autoComplete="off"
                 />
                 <Button
                   type="button"

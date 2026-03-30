@@ -14,6 +14,7 @@ import {
   BarChart3,
   Contact,
   Plug,
+  BookOpen,
 } from "lucide-react"
 
 import {
@@ -59,6 +60,11 @@ const mainNavItems = [
     title: "Audiences",
     url: "/audiences",
     icon: Users,
+  },
+  {
+    title: "Knowledge Base",
+    url: "/knowledge-base",
+    icon: BookOpen,
   },
   {
     title: "History",

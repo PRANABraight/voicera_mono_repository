@@ -33,6 +33,14 @@ This will:
 - Build and start the FastAPI API container
 - Automatically initialize database collections and indexes on first startup
 
+**Knowledge Base (PDF ingest)** runs inside the API container and needs `chromadb` (and its native stack). If uploads fail with a message like `RAG import failed`, rebuild the backend image so dependencies are installed in the image:
+
+```bash
+docker compose build --no-cache backend
+```
+
+From the monorepo root you can use `make build-backend-services` (builds mongodb, backend, minio), then start again.
+
 ### 3. Access the Application
 
 The API will be available at:
@@ -59,9 +67,15 @@ If you prefer to run the application locally (without Docker):
 
 ### 1. Install Dependencies
 
+Use a virtual environment (recommended on Linux; system Python may block global `pip`):
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+This installs **Knowledge Base / RAG** packages too (`chromadb`, `openai`, `pypdf`, etc.). Run the API with the same environment (`python run.py` after `activate`, or `.venv/bin/python run.py`). Knowledge Base PDF ingest runs **inside** this API process (background task → `rag_system.ingest_pipeline` → Chroma on disk under `CHROMA_BASE_DIR`).
 
 ### 2. Setup Environment
 
