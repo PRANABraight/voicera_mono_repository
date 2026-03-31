@@ -257,3 +257,28 @@ async def bot(
             storage=storage,
             call_start_time=call_start_time
         )
+
+        # Post-call webhook — used by inline (leadership-coach) calls to deliver
+        # transcript + metadata back to /api/voicera/webhook on the Next.js app.
+        webhook_url = agent_config.get("webhook_url", "")
+        if webhook_url and call_data["transcript_lines"]:
+            try:
+                import aiohttp
+                duration_seconds = int(time.monotonic() - call_start_time)
+                transcript_text = "\n".join(call_data["transcript_lines"])
+                payload = {
+                    "callId": call_sid,
+                    "status": "completed",
+                    "endedReason": "call-ended",
+                    "transcript": transcript_text,
+                    "transcriptLines": call_data["transcript_lines"],
+                    "durationSeconds": duration_seconds,
+                    "startedAt": start_time_utc,
+                    "endedAt": datetime.utcnow().isoformat(),
+                    "metadata": agent_config.get("metadata", {}),
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(webhook_url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        logger.info(f"[webhook] POST {webhook_url} → {resp.status}")
+            except Exception as e:
+                logger.error(f"[webhook] Failed to POST to {webhook_url}: {e}")

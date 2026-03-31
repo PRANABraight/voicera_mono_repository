@@ -3,9 +3,10 @@
 import os
 import json
 import traceback
+import uuid as _uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from loguru import logger
 from dotenv import load_dotenv
@@ -23,6 +24,28 @@ load_dotenv()
 # Constants
 AGENT_CONFIGS_DIR = Path("agent_configs")
 
+# In-memory session store: session_id → agent_config dict
+# Used by /call/outbound to pass inline config to /answer and /agent/{id} without a backend
+_session_store: Dict[str, dict] = {}
+
+# Provider name normalisation (worker sends lowercase, Voicera services expect Title case)
+_PROVIDER_MAP = {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "grok": "Grok",
+    "deepgram": "Deepgram",
+    "google": "Google",
+    "sarvam": "Sarvam",
+    "ai4bharat": "AI4Bharat",
+    "bhashini": "Bhashini",
+    "elevenlabs": "ElevenLabs",
+    "cartesia": "Cartesia",
+}
+
+
+def _normalise_provider(name: str) -> str:
+    return _PROVIDER_MAP.get(str(name).strip().lower(), name)
+
 
 # === Pydantic Models ===
 
@@ -32,6 +55,23 @@ class OutboundCallRequest(BaseModel):
     agent_id: str
     custom_field: Optional[str] = None
     caller_id: Optional[str] = None
+
+
+class InlineCallRequest(BaseModel):
+    """Inline call request sent by the leadership-coach worker.
+
+    The worker builds the full system prompt and LLM/STT/TTS config and passes
+    it here directly, so no voicera_backend is needed.
+    """
+    phone: str
+    systemPrompt: str
+    greeting: str = ""
+    llm: Dict[str, Any] = {}   # { "provider": "openai", "model": "gpt-4o-mini" }
+    stt: Dict[str, Any] = {}   # { "provider": "deepgram", "language": "English", "args": {...} }
+    tts: Dict[str, Any] = {}   # { "provider": "openai", "args": { "voice": "nova" } }
+    webhookUrl: str = ""
+    maxDurationSeconds: int = 600
+    metadata: Dict[str, Any] = {}
 
 
 # === Helper Functions ===
@@ -172,9 +212,83 @@ async def make_outbound_call(request: OutboundCallRequest):
         logger.error(f"❌ Outbound call failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/call/outbound")
+async def inline_outbound_call(request: InlineCallRequest):
+    """Initiate an outbound call with an inline agent config (no backend required).
+
+    Called by the leadership-coach worker. Converts the worker's payload into
+    Voicera's internal agent_config format, stores it in _session_store, then
+    triggers a Vobiz outbound call keyed to the session ID.
+    """
+    session_id = str(_uuid.uuid4())
+
+    # Build agent_config in the format expected by bot.py / services.py
+    llm_provider = _normalise_provider(request.llm.get("provider", "OpenAI"))
+    llm_model = request.llm.get("model", "gpt-4o-mini")
+
+    stt_provider = _normalise_provider(request.stt.get("provider", "Deepgram"))
+    stt_language = request.stt.get("language", "English")
+    stt_args = request.stt.get("args", {})
+    stt_model = stt_args.get("model") or request.stt.get("model", "nova-2")
+
+    tts_provider = _normalise_provider(request.tts.get("provider", "OpenAI"))
+    tts_args = request.tts.get("args", {})
+
+    agent_config = {
+        "system_prompt": request.systemPrompt,
+        "greeting_message": request.greeting,
+        "session_timeout_minutes": request.maxDurationSeconds // 60,
+        "webhook_url": request.webhookUrl,
+        "metadata": request.metadata,
+        "agent_type": "mira",
+        "llm_model": {
+            "name": llm_provider,
+            "args": {"model": llm_model},
+        },
+        "stt_model": {
+            "name": stt_provider,
+            "language": stt_language,
+            "args": {"model": stt_model, **{k: v for k, v in stt_args.items() if k != "model"}},
+        },
+        "tts_model": {
+            "name": tts_provider,
+            "args": tts_args,
+        },
+    }
+
+    _session_store[session_id] = agent_config
+    logger.info(f"[inline] Stored session {session_id}: llm={llm_provider}/{llm_model} stt={stt_provider} tts={tts_provider}")
+
+    try:
+        result = make_outbound_call_vobiz(request.phone, agent_id=session_id)
+    except ValueError as e:
+        _session_store.pop(session_id, None)
+        logger.error(f"[inline] Call config error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        _session_store.pop(session_id, None)
+        logger.error(f"[inline] Outbound call failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return JSONResponse(status_code=200, content={
+        "callId": session_id,
+        "success": True,
+        "vobizResult": result,
+    })
+
+
+async def _resolve_agent_config(agent_id: str) -> dict:
+    """Return agent config from in-memory store (inline calls) or backend (legacy calls)."""
+    if agent_id in _session_store:
+        logger.info(f"[config] Using inline session config for {agent_id}")
+        return _session_store[agent_id]
+    logger.info(f"[config] Falling back to backend for agent_id={agent_id}")
+    return await fetch_agent_config_from_backend(agent_id)
+
+
 async def log_meeting(agent_id: str, form_data_dict: dict):
     try:
-        agent_config = await fetch_agent_config_from_backend(agent_id)
+        agent_config = await _resolve_agent_config(agent_id)
         agent_type = agent_config.get('agent_type')
         org_id = agent_config.get('org_id')
 
@@ -247,9 +361,9 @@ async def websocket_endpoint(websocket: WebSocket, agent_id: str):
     stream_sid = None
     
     try:
-        # Load agent configuration
-        agent_config = await fetch_agent_config_from_backend(agent_id)
-        agent_type = agent_config.get("agent_type")
+        # Load agent configuration — inline session store first, backend as fallback
+        agent_config = await _resolve_agent_config(agent_id)
+        agent_type = agent_config.get("agent_type", "mira")
 
         logger.info(f"📥 Agent config: {agent_config}")
         if not agent_config:
