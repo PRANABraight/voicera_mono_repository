@@ -112,6 +112,9 @@ def make_outbound_call_vobiz(
     from_number = caller_id or os.environ.get('VOBIZ_CALLER_ID')
     if not from_number:
         raise ValueError("No caller_id provided and VOBIZ_CALLER_ID not set")
+    # Vobiz (Plivo-compatible) expects numbers without leading +
+    from_number = from_number.lstrip('+')
+    customer_number = customer_number.lstrip('+')
     
     
     headers = {
@@ -270,8 +273,15 @@ async def inline_outbound_call(request: InlineCallRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         _session_store.pop(session_id, None)
-        logger.error(f"[inline] Outbound call failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Include Vobiz response body if available (requests.HTTPError has .response)
+        vobiz_body = None
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                vobiz_body = e.response.json()
+            except Exception:
+                vobiz_body = e.response.text
+        logger.error(f"[inline] Outbound call failed: {e} | vobiz_body={vobiz_body}")
+        raise HTTPException(status_code=500, detail={"error": str(e), "vobiz": vobiz_body})
 
     return JSONResponse(status_code=200, content={
         "callId": session_id,
