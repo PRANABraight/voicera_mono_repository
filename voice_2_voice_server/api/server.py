@@ -127,9 +127,12 @@ def make_outbound_call_vobiz(
     }  
     
     logger.info(f"📞 Outbound call: {from_number} → {customer_number} (agent: {agent_id})")
+    logger.info(f"📞 Vobiz payload: {payload}")
     vobiz_api_base_url_api = f"{vobiz_api_base_url}/Account/{auth_id}/Call/"
     response = requests.post(vobiz_api_base_url_api, json=payload, headers=headers, timeout=30)
-    response.raise_for_status()
+    if not response.ok:
+        logger.error(f"❌ Vobiz error {response.status_code}: {response.text}")
+        response.raise_for_status()
     
     result = response.json()
     logger.info(f"✅ Call initiated: {result.get('call_uuid', 'unknown')}")
