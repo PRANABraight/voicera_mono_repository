@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude)",
+      "Bash(xargs grep:*)",
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(curl:*)",
+      "Bash(docker compose:*)",
+      "Bash(python3:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(wc -l app/\\\\\\(dashboard\\\\\\)/assistants/page.tsx)",
+      "Bash(npm install:*)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(netstat -ano)",
+      "Bash(cmd /c \"taskkill /PID 19792 /F & taskkill /PID 16984 /F\")",
+      "Bash(docker info:*)",
+      "Bash(docker context:*)",
+      "Bash(start 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe')"
+    ]
+  }
+}

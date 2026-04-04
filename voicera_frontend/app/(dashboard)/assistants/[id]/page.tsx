@@ -27,6 +27,7 @@ import {
   Mic,
   Settings,
   Languages,
+  Check,
 } from "lucide-react"
 import {
   Dialog,
@@ -36,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { getCurrentUser, getAgent, updateAgent, getIntegrations, type User, type Agent, type CreateAgentRequest, type Integration } from "@/lib/api"
+import { getCurrentUser, getAgent, updateAgent, getIntegrations, getKnowledgeDocuments, type User, type Agent, type CreateAgentRequest, type Integration, type KnowledgeDocument } from "@/lib/api"
 
 // Import JSON data
 import sttData from "@/stt.json"
@@ -61,11 +62,13 @@ const getProviderOfficialName = (providerId: string): string => {
   const nameMap: Record<string, string> = {
     assembly: "Assembly",
     azure: "Azure",
+    anthropic: "Anthropic",
     deepgram: "Deepgram",
     elevenlabs: "Elevenlabs",
     gladia: "Gladia",
     google: "Google",
     gcp: "Google", // GCP is officially called Google
+    kenpath: "Kenpath",
     pixa: "Pixa",
     sarvam: "Sarvam",
     smallest: "Smallest",
@@ -74,6 +77,8 @@ const getProviderOfficialName = (providerId: string): string => {
     cartesia: "Cartesia",
     openai: "OpenAI",
     playht: "PlayHT",
+    groq: "Groq",
+    grok: "Grok",
   }
   return nameMap[providerId] || providerId.charAt(0).toUpperCase() + providerId.slice(1)
 }
@@ -82,12 +87,14 @@ const getProviderOfficialName = (providerId: string): string => {
 const getProviderIdFromName = (providerName: string): string => {
   const reverseMap: Record<string, string> = {
     "Assembly": "assembly",
+    "Anthropic": "anthropic",
     "Azure": "azure",
     "Deepgram": "deepgram",
     "Elevenlabs": "elevenlabs",
     "Gladia": "gladia",
     "Google": "gcp", // Google maps to "gcp" internally
     "GCP": "gcp", // Handle legacy "GCP" name
+    "Kenpath": "kenpath",
     "Pixa": "pixa",
     "Sarvam": "sarvam",
     "Smallest": "smallest",
@@ -96,6 +103,8 @@ const getProviderIdFromName = (providerName: string): string => {
     "Cartesia": "cartesia",
     "OpenAI": "openai",
     "PlayHT": "playht",
+    "Groq": "groq",
+    "Grok": "grok",
   }
   return reverseMap[providerName] || providerName.toLowerCase()
 }
@@ -134,6 +143,8 @@ const llmProviders = {
   anthropic: {
     name: "Anthropic",
     models: [
+      "claude-sonnet-4-5-20250929",
+      "claude-opus-4-6-20250929",
       "claude-sonnet-4-20250514",
       "claude-3-5-sonnet-20241022",
       "claude-3-5-haiku-20241022",
@@ -157,6 +168,14 @@ const llmProviders = {
       "mixtral-8x7b-32768",
     ],
   },
+  grok: {
+    name: "Grok",
+    models: [
+      "grok-3-beta",
+      "grok-2-1212",
+      "grok-2-vision-1212",
+    ],
+  },
 }
 
 export default function AgentDetailPage() {
@@ -175,6 +194,8 @@ export default function AgentDetailPage() {
   const [hasChanges, setHasChanges] = useState(false)
   const [originalConfig, setOriginalConfig] = useState<any>(null)
   const [integratedProviders, setIntegratedProviders] = useState<Set<string>>(new Set())
+  const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDocument[]>([])
+  const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false)
 
   // Form state
   const [agentName, setAgentName] = useState("")
@@ -183,6 +204,9 @@ export default function AgentDetailPage() {
   const [language, setLanguage] = useState("")
   const [llmProvider, setLlmProvider] = useState("")
   const [llmModel, setLlmModel] = useState("")
+  const [knowledgeEnabled, setKnowledgeEnabled] = useState(false)
+  const [knowledgeDocumentIds, setKnowledgeDocumentIds] = useState<string[]>([])
+  const [knowledgeTopK, setKnowledgeTopK] = useState(3)
   const [sttProvider, setSttProvider] = useState("")
   const [sttModel, setSttModel] = useState("")
   const [ttsProvider, setTtsProvider] = useState("")
@@ -301,7 +325,7 @@ export default function AgentDetailPage() {
     return new Set(models)
   }, [language, ttsProvider])
 
-  // Get available TTS voices for selected provider/model
+  // Get available TTS voices for selected provider/model (Sarvam: voices vary by model)
   const availableTTSVoices = useMemo(() => {
     if (!language || !ttsProvider) return []
     const langData =
@@ -310,18 +334,22 @@ export default function AgentDetailPage() {
 
     const providerData = langData.models[ttsProvider as keyof typeof langData.models] as {
       voices?: string | string[]
+      voices_by_model?: Record<string, string[]>
     }
     if (!providerData) return []
 
+    if (ttsProvider === "sarvam" && ttsModel && providerData.voices_by_model?.[ttsModel]) {
+      return providerData.voices_by_model[ttsModel]
+    }
     if (Array.isArray(providerData.voices)) {
       return providerData.voices
     }
     return []
-  }, [language, ttsProvider])
+  }, [language, ttsProvider, ttsModel])
 
-  // Get available TTS descriptions for AI4Bharat provider
+  // Get available TTS descriptions for AI4Bharat and Bhashini providers
   const availableTTSDescriptions = useMemo(() => {
-    if (ttsProvider !== "ai4bharat") return []
+    if (ttsProvider !== "ai4bharat" && ttsProvider !== "bhashini") return []
     return descriptionsData.map((item) => item.description)
   }, [ttsProvider])
 
@@ -331,6 +359,18 @@ export default function AgentDetailPage() {
     const provider = llmProviders[llmProvider as keyof typeof llmProviders]
     return provider?.models || []
   }, [llmProvider])
+  const selectedKnowledgeDocs = useMemo(
+    () => knowledgeDocs.filter((d) => knowledgeDocumentIds.includes(d.document_id)),
+    [knowledgeDocs, knowledgeDocumentIds]
+  )
+
+  const toggleKnowledgeDocument = (documentId: string) => {
+    setKnowledgeDocumentIds((prev) =>
+      prev.includes(documentId)
+        ? prev.filter((id) => id !== documentId)
+        : [...prev, documentId]
+    )
+  }
 
   // Load agent data
   useEffect(() => {
@@ -378,6 +418,16 @@ export default function AgentDetailPage() {
         } catch (intError) {
           console.error("Failed to fetch integrations:", intError)
         }
+        try {
+          setIsKnowledgeLoading(true)
+          const docs = await getKnowledgeDocuments()
+          setKnowledgeDocs(docs.filter((d) => d.status === "ready"))
+        } catch (kbError) {
+          console.error("Failed to fetch knowledge docs:", kbError)
+          setKnowledgeDocs([])
+        } finally {
+          setIsKnowledgeLoading(false)
+        }
 
         if (userData.org_id) {
           const agentData = await getAgent(agentId, userData.org_id)
@@ -418,6 +468,13 @@ export default function AgentDetailPage() {
           const llmProviderName = agentData.agent_config?.llm_model?.name || ""
           setLlmProvider(getProviderIdFromName(llmProviderName))
           setLlmModel(agentData.agent_config?.llm_model?.model || "")
+          setKnowledgeEnabled(Boolean((agentData.agent_config as any)?.knowledge_base_enabled))
+          setKnowledgeDocumentIds(
+            Array.isArray((agentData.agent_config as any)?.knowledge_document_ids)
+              ? (agentData.agent_config as any).knowledge_document_ids
+              : []
+          )
+          setKnowledgeTopK(Number((agentData.agent_config as any)?.knowledge_top_k || 3))
 
           // Load language - use language name directly (no conversion needed)
           // Priority: agent_config.language > stt_model.language > tts_model.language
@@ -455,20 +512,22 @@ export default function AgentDetailPage() {
           const ttsProviderName = agentData.agent_config?.tts_model?.name || ""
           const ttsProviderId = getProviderIdFromName(ttsProviderName)
           setTtsProvider(ttsProviderId)
-          // For Cartesia and Google, load from args; for others, load from top level
+          // For Cartesia, Google, and ElevenLabs, load from args; for others, load from top level
           const ttsModelConfig = agentData.agent_config?.tts_model as any
           const ttsArgs = ttsModelConfig?.args || {}
-          const modelValue = (ttsProviderId === "cartesia" || ttsProviderId === "gcp")
+          const usesArgsForModel = ttsProviderId === "cartesia" || ttsProviderId === "gcp" || ttsProviderId === "elevenlabs"
+          const modelValue = usesArgsForModel
             ? (ttsArgs.model || ttsModelConfig?.model || "")
             : (ttsModelConfig?.model || "")
           setTtsModel(modelValue)
-          // For Cartesia and Google, load voice_id from args; for others, load from speaker
-          const voiceValue = (ttsProviderId === "cartesia" || ttsProviderId === "gcp")
-            ? (ttsArgs.voice_id || ttsModelConfig?.voice_id || "")
+          // For Cartesia, Google, and ElevenLabs, load voice_id from args; for others, load from speaker
+          const usesArgsForVoice = ttsProviderId === "cartesia" || ttsProviderId === "gcp" || ttsProviderId === "elevenlabs"
+          const voiceValue = usesArgsForVoice
+            ? (ttsArgs.voice_id || ttsModelConfig?.voice_id || ttsArgs.voice || "")
             : (ttsModelConfig?.speaker || "")
           setTtsVoice(voiceValue)
-          // Load TTS description for AI4Bharat
-          if (ttsProviderId === "ai4bharat") {
+          // Load TTS description for AI4Bharat and Bhashini
+          if (ttsProviderId === "ai4bharat" || ttsProviderId === "bhashini") {
             setTtsDescription(ttsModelConfig?.description || "")
           } else {
             setTtsDescription("")
@@ -519,13 +578,17 @@ export default function AgentDetailPage() {
       }
     }
 
-    // Clear TTS voice if it's not available for current provider
+    // Clear TTS voice if it's not available for current provider; for Sarvam set to first voice of model
     if (ttsProvider && ttsVoice && availableTTSVoices.length > 0) {
       if (!availableTTSVoices.includes(ttsVoice)) {
-        setTtsVoice("")
+        if (ttsProvider === "sarvam") {
+          setTtsVoice(availableTTSVoices[0])
+        } else {
+          setTtsVoice("")
+        }
       }
     }
-  }, [language, sttProvider, ttsProvider, supportedSTTModels, supportedTTSModels, availableTTSVoices, isLoading])
+  }, [language, sttProvider, ttsProvider, ttsModel, supportedSTTModels, supportedTTSModels, availableTTSVoices, isLoading])
 
   // Detect changes
   useEffect(() => {
@@ -542,6 +605,10 @@ export default function AgentDetailPage() {
       language: languageName || "", // Include top-level language field
       system_prompt: systemPrompt || "",
       greeting_message: greetingMessage || "",
+      knowledge_base_enabled: llmProvider === "openai" ? knowledgeEnabled : false,
+      knowledge_document_ids:
+        llmProvider === "openai" && knowledgeEnabled ? knowledgeDocumentIds : [],
+      knowledge_top_k: knowledgeTopK,
       llm_model: {
         name: llmProvider || "",
         ...(llmProvider && llmProvider !== "kenpath" && llmModel && { model: llmModel }),
@@ -556,8 +623,8 @@ export default function AgentDetailPage() {
         name: ttsProvider || "",
         ...(ttsModel && { model: ttsModel }),
         language: languageName || "",
-        ...(ttsProvider === "cartesia" && ttsVoice && { voice_id: ttsVoice }),
-        speaker: ttsProvider === "cartesia" ? "" : (ttsVoice || ""),
+        ...((ttsProvider === "cartesia" || ttsProvider === "gcp" || ttsProvider === "elevenlabs") && ttsVoice && { voice_id: ttsVoice }),
+        speaker: (ttsProvider === "cartesia" || ttsProvider === "gcp" || ttsProvider === "elevenlabs") ? "" : (ttsVoice || ""),
         speed: speed || 1.0,
         ...(agent.agent_config?.tts_model?.description && { description: agent.agent_config.tts_model.description }),
         ...(agent.agent_config?.tts_model?.pitch !== undefined && { pitch: agent.agent_config.tts_model.pitch }),
@@ -588,7 +655,7 @@ export default function AgentDetailPage() {
 
     const hasChanged = originalNormalized !== currentNormalized
     setHasChanges(hasChanged)
-  }, [systemPrompt, greetingMessage, language, llmProvider, llmModel, sttProvider, sttModel, ttsProvider, ttsModel, ttsVoice, speed, originalConfig, agent])
+  }, [systemPrompt, greetingMessage, language, llmProvider, llmModel, knowledgeEnabled, knowledgeDocumentIds, knowledgeTopK, sttProvider, sttModel, ttsProvider, ttsModel, ttsVoice, speed, originalConfig, agent])
 
   const handleSaveClick = () => {
     setShowConfirmModal(true)
@@ -614,6 +681,10 @@ export default function AgentDetailPage() {
           language: languageName, // Update the top-level language field
           system_prompt: systemPrompt,
           greeting_message: greetingMessage,
+          knowledge_base_enabled: llmProvider === "openai" ? knowledgeEnabled : false,
+          knowledge_document_ids:
+            llmProvider === "openai" && knowledgeEnabled ? knowledgeDocumentIds : [],
+          knowledge_top_k: knowledgeTopK,
           llm_model: {
             name: getProviderOfficialName(llmProvider),
             ...(llmProvider !== "kenpath" && { model: llmModel }),
@@ -627,16 +698,16 @@ export default function AgentDetailPage() {
           tts_model: {
             name: getProviderOfficialName(ttsProvider),
             // language: languageName,
-            ...((ttsProvider === "cartesia" || ttsProvider === "gcp") && {
+            ...((ttsProvider === "cartesia" || ttsProvider === "gcp" || ttsProvider === "elevenlabs") && {
               args: {
                 ...(ttsModel && { model: ttsModel }),
                 ...(ttsVoice && { voice_id: ttsVoice }),
               },
             }),
-            ...(ttsProvider !== "cartesia" && ttsProvider !== "gcp" && ttsModel && { model: ttsModel }),
-            speaker: (ttsProvider === "cartesia" || ttsProvider === "gcp") ? "" : (ttsVoice || ""),
+            ...(ttsProvider !== "cartesia" && ttsProvider !== "gcp" && ttsProvider !== "elevenlabs" && ttsModel && { model: ttsModel }),
+            speaker: (ttsProvider === "cartesia" || ttsProvider === "gcp" || ttsProvider === "elevenlabs") ? "" : (ttsVoice || ""),
             speed: speed,
-            ...(agent.agent_config?.tts_model?.description && { description: agent.agent_config.tts_model.description }),
+            ...((ttsProvider === "ai4bharat" || ttsProvider === "bhashini") && ttsDescription && { description: ttsDescription }),
             ...(agent.agent_config?.tts_model?.pitch !== undefined && { pitch: agent.agent_config.tts_model.pitch }),
             ...(agent.agent_config?.tts_model?.emotion_intensity !== undefined && { emotion_intensity: agent.agent_config.tts_model.emotion_intensity }),
             ...(agent.agent_config?.tts_model?.loudness !== undefined && { loudness: agent.agent_config.tts_model.loudness }),
@@ -818,6 +889,10 @@ export default function AgentDetailPage() {
                       onValueChange={(v) => {
                         setLlmProvider(v);
                         setLlmModel("");
+                        if (v !== "openai") {
+                          setKnowledgeEnabled(false)
+                          setKnowledgeDocumentIds([])
+                        }
                       }}
                     >
                       <SelectTrigger className="border-slate-200 h-11 shadow-sm rounded-md focus:ring-slate-300 transition focus:border-slate-500 bg-white">
@@ -881,6 +956,77 @@ export default function AgentDetailPage() {
                       {availableLLMModels.length === 0 && (
                         <div className="text-xs text-slate-400 mt-2 pl-1">
                           No models available for this provider.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {llmProvider === "openai" && (
+                    <div className="border border-slate-200 rounded-lg p-4 space-y-3 bg-slate-50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">Knowledge Base</p>
+                          <p className="text-xs text-slate-500">Use selected knowledge files during responses.</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={knowledgeEnabled}
+                            onChange={() => setKnowledgeEnabled((v) => !v)}
+                          />
+                          <div
+                            className="w-11 h-6 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer-checked:bg-emerald-600 transition-colors"
+                          />
+                          <div
+                            className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"
+                          />
+                        </label>
+                      </div>
+                      {knowledgeEnabled && (
+                        <div className="space-y-2">
+                          <div className="text-xs text-slate-500">
+                            {selectedKnowledgeDocs.length} document(s) selected
+                          </div>
+                          {isKnowledgeLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading knowledge documents...
+                            </div>
+                          ) : knowledgeDocs.length === 0 ? (
+                            <p className="text-sm text-slate-500">No ready knowledge documents found.</p>
+                          ) : (
+                            <div className="max-h-40 overflow-auto rounded-md border border-slate-200 bg-white divide-y divide-slate-100">
+                              {knowledgeDocs.map((doc) => {
+                                const checked = knowledgeDocumentIds.includes(doc.document_id)
+                                return (
+                                  <button
+                                    key={doc.document_id}
+                                    type="button"
+                                    onClick={() => toggleKnowledgeDocument(doc.document_id)}
+                                    className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-3"
+                                  >
+                                    <span
+                                      aria-hidden
+                                      className={[
+                                        "h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors",
+                                        checked
+                                          ? "bg-emerald-600 border-emerald-600"
+                                          : "bg-white border-slate-300",
+                                      ].join(" ")}
+                                    >
+                                      {checked && (
+                                        <Check className="h-3 w-3 text-white" />
+                                      )}
+                                    </span>
+                                    <span className="text-sm text-slate-700 truncate">
+                                      {doc.original_filename}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1174,18 +1320,18 @@ export default function AgentDetailPage() {
                           {ttsModel && ttsProvider && (
                             <>
                               {/* Voice or Voice ID */}
-                              {(ttsProvider === "gcp" || ttsProvider === "cartesia") ? (
+                              {(ttsProvider === "gcp" || ttsProvider === "cartesia" || ttsProvider === "elevenlabs") ? (
                                 <div>
                                   <label className="text-xs font-semibold text-slate-500 mb-2 block">
                                     Voice ID
                                     <span className="ml-2 text-slate-400 text-xs tracking-normal">
-                                      (copy from provider's dashboard)
+                                      (copy from provider dashboard)
                                     </span>
                                   </label>
                                   <Input
                                     value={ttsVoice}
                                     onChange={(e) => setTtsVoice(e.target.value)}
-                                    placeholder="Enter voice ID"
+                                    placeholder={ttsProvider === "elevenlabs" ? "e.g. 21m00Tcm4TlvDq8ikWAM (Rachel)" : "Enter voice ID"}
                                     className="h-11 border-slate-200 rounded-md bg-slate-50 focus:border-slate-400"
                                   />
                                 </div>
@@ -1213,8 +1359,8 @@ export default function AgentDetailPage() {
                                     </SelectContent>
                                   </Select>
 
-                                  {/* TTS Description for AI4Bharat */}
-                                  {ttsProvider === "ai4bharat" && (
+                                  {/* TTS Description for AI4Bharat and Bhashini */}
+                                  {(ttsProvider === "ai4bharat" || ttsProvider === "bhashini") && (
                                     <div className="mt-3">
                                       <label className="text-xs font-semibold text-slate-500 mb-2 block">
                                         Voice Description

@@ -2,8 +2,6 @@
  * API utility functions for making authenticated requests
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-
 /**
  * Get the stored auth token from localStorage
  */
@@ -63,7 +61,8 @@ export async function fetchWithAuth(
   headers.set("Content-Type", "application/json")
   headers.set("Accept", "application/json")
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Use relative URL so browser hits frontend; frontend proxies to backend (Docker: backend hostname only resolves server-side)
+  const response = await fetch(endpoint, {
     ...options,
     headers,
   })
@@ -339,6 +338,9 @@ export interface AgentConfig {
   greeting_message: string
   session_timeout_minutes: number
   language: string
+  knowledge_base_enabled?: boolean
+  knowledge_document_ids?: string[]
+  knowledge_top_k?: number
   llm_model: {
     name: string
     model?: string
@@ -720,6 +722,114 @@ export async function deleteIntegration(model: string): Promise<{ status: string
   return response.json()
 }
 
+// Knowledge base (org-scoped PDF ingest)
+export interface KnowledgeDocument {
+  document_id: string
+  org_id: string
+  original_filename: string
+  status: "processing" | "ready" | "failed"
+  chunk_count?: number | null
+  embedding_model?: string | null
+  error_message?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export interface KnowledgeUploadResponse {
+  document_id: string
+  org_id: string
+  original_filename: string
+  status: string
+}
+
+export interface KnowledgeDeleteResponse {
+  deleted: boolean
+}
+
+/**
+ * List knowledge PDFs for the current organization (JWT).
+ */
+export async function getKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
+  const response = await fetchApiRoute("/api/knowledge-base")
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      (error as { detail?: string }).detail ||
+        (error as { error?: string }).error ||
+        "Failed to fetch knowledge documents"
+    )
+  }
+
+  return response.json()
+}
+
+/**
+ * Upload a PDF for background ingest (multipart). Do not set Content-Type manually.
+ */
+export async function uploadKnowledgePdf(
+  file: File,
+  orgId: string
+): Promise<KnowledgeUploadResponse> {
+  const token = getAuthToken()
+  if (!token) {
+    throw new Error("No authentication token found")
+  }
+
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("org_id", orgId)
+
+  const response = await fetch("/api/knowledge-base", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (response.status === 401) {
+    clearAuth()
+    if (typeof window !== "undefined") {
+      window.location.href = "/"
+    }
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      (error as { detail?: string }).detail ||
+        (error as { error?: string }).error ||
+        "Failed to upload knowledge PDF"
+    )
+  }
+
+  return response.json()
+}
+
+/**
+ * Delete a knowledge document and its indexed chunks (JWT org from token).
+ */
+export async function deleteKnowledgeDocument(
+  documentId: string
+): Promise<KnowledgeDeleteResponse> {
+  const encodedId = encodeURIComponent(documentId)
+  const response = await fetchApiRoute(`/api/knowledge-base/${encodedId}`, {
+    method: "DELETE",
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      (error as { detail?: string }).detail ||
+        (error as { error?: string }).error ||
+        "Failed to delete knowledge document"
+    )
+  }
+
+  return response.json()
+}
+
 // Member types
 export interface Member {
   email: string
@@ -757,7 +867,7 @@ export async function getOrgMembers(orgId: string): Promise<Member[]> {
  * Join an existing organization (public endpoint - no auth required)
  */
 export async function joinOrganization(data: JoinOrganizationRequest): Promise<{ status: string; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/members/add-member`, {
+  const response = await fetch("/api/v1/members/add-member", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -799,7 +909,7 @@ export async function deleteMember(email: string, orgId: string): Promise<{ stat
  */
 export async function checkUserExists(email: string): Promise<User | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/users/${encodeURIComponent(email)}`, {
+    const response = await fetch(`/api/v1/users/${encodeURIComponent(email)}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

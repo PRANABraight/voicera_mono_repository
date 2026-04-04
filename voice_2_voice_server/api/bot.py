@@ -9,7 +9,9 @@ from datetime import datetime
 from loguru import logger
 from dotenv import load_dotenv
 
-from pipecat.frames.frames import TTSSpeakFrame
+
+
+from pipecat.frames.frames import TTSSpeakFrame, TTSStartedFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -18,13 +20,15 @@ from pipecat.processors.audio.audio_buffer_processor import AudioBufferProcessor
 from pipecat.processors.transcript_processor import TranscriptProcessor
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
-from typing import Any
+from pipecat.utils.text.base_text_aggregator import BaseTextAggregator, Aggregation, AggregationType
+from typing import Any, Optional
 from pipecat.transports.websocket.fastapi import (
     FastAPIWebsocketParams,
     FastAPIWebsocketTransport,
 )
 from storage.minio_client import MinIOStorage
 from serializer.vobiz_serializer import VobizFrameSerializer
+from serializer.ubona_serializer import UbonaFrameSerializer
 from .services import (
     create_llm_service,
     create_stt_service,
@@ -36,12 +40,93 @@ from services.audio.greeting_interruption_filter import GreetingInterruptionFilt
 from .call_recording_utils import submit_call_recording
 
 
+
 load_dotenv(override=False)
+
+
+# Monkey-patch SOXRStreamAudioResampler to reduce latency from ~200ms to near-zero
+# by switching from "VHQ" (Very High Quality) to "Quick" quality.
+try:
+    from pipecat.audio.resamplers.soxr_stream_resampler import SOXRStreamAudioResampler
+    import soxr
+    import time
+    
+    def patched_initialize(self, in_rate: float, out_rate: float):
+        self._in_rate = in_rate
+        self._out_rate = out_rate
+        self._last_resample_time = time.time()
+        # "QQ" = Quick Quality (Cubic/Linear), minimal buffer
+        # "VHQ" = Very High Quality (Sinc), large FIR filter buffer
+        self._soxr_stream = soxr.ResampleStream(
+            in_rate=in_rate, out_rate=out_rate, num_channels=1, quality="QQ", dtype="int16"
+        )
+    
+    SOXRStreamAudioResampler._initialize = patched_initialize
+    logger.info("Monkey-patched SOXRStreamAudioResampler for low latency (Quick quality)")
+except Exception as e:
+    logger.warning(f"Failed to patch SOXRStreamAudioResampler: {e}")
+
 
 
 def _get_sample_rate() -> int:
     """Get the audio sample rate from environment."""
     return int(os.getenv("SAMPLE_RATE", "8000"))
+
+
+class FastPunctuationAggregator(BaseTextAggregator):
+    """Fast aggregator that sends text immediately on punctuation - no lookahead/NLTK."""
+    
+    def __init__(self):
+        self._text = ""
+    
+    @property
+    def text(self):
+        return Aggregation(text=self._text.strip(), type=AggregationType.SENTENCE)
+    
+    async def aggregate(self, text: str):
+        for char in text:
+            self._text += char
+            if char in '.!?,':
+                if self._text.strip():
+                    yield Aggregation(self._text.strip(), AggregationType.SENTENCE)
+                    self._text = ""
+    
+    async def flush(self):
+        if self._text.strip():
+            result = self._text.strip()
+            self._text = ""
+            return Aggregation(result, AggregationType.SENTENCE)
+        return None
+    
+    async def handle_interruption(self):
+        self._text = ""
+    
+    async def reset(self):
+        self._text = ""
+
+
+def patch_immediate_first_chunk(transport):
+    """Patch transport to send first audio chunk immediately with zero delay."""
+    output = transport.output()
+    output._send_interval = 0
+    output._first_chunk_sent = False
+    
+    _orig_write = output.write_audio_frame
+    async def _write_immediate(frame):
+        if not output._first_chunk_sent:
+            output._first_chunk_sent = True
+            output._next_send_time = time.monotonic() - 0.001
+            logger.info(f"🚀 Sending first chunk immediately: {len(frame.audio)} bytes (bypassing queue)")
+        await _orig_write(frame)
+    output.write_audio_frame = _write_immediate
+    
+    _orig_process = output.process_frame
+    async def _reset_on_tts(frame, direction):
+        if isinstance(frame, TTSStartedFrame):
+            output._first_chunk_sent = False
+            logger.debug(f"🔄 Reset first_chunk_sent flag for new TTS response")
+        await _orig_process(frame, direction)
+    output.process_frame = _reset_on_tts
 
 
 async def run_bot(
@@ -50,7 +135,8 @@ async def run_bot(
     audiobuffer: AudioBufferProcessor,
     transcript: TranscriptProcessor,
     handle_sigint: bool = False,
-    vad_analyzer: Any = None
+    vad_analyzer: Any = None,
+    vistaar_session_id: Optional[str] = None,
 ) -> None:
     """Run the voice bot pipeline with the given configuration.
     
@@ -67,9 +153,18 @@ async def run_bot(
     logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
     
     try:
-        llm_config = agent_config.get("llm_model", {})
+        llm_config = dict(agent_config.get("llm_model", {}) or {})
         stt_config = agent_config.get("stt_model", {})
         tts_config = agent_config.get("tts_model", {})
+        llm_provider_name = str(llm_config.get("name") or "").strip().lower()
+        if llm_provider_name == "openai":
+            llm_config["knowledge_base_enabled"] = bool(
+                agent_config.get("knowledge_base_enabled", False)
+            )
+            llm_config["knowledge_document_ids"] = list(
+                agent_config.get("knowledge_document_ids") or []
+            )
+            llm_config["knowledge_top_k"] = int(agent_config.get("knowledge_top_k", 3) or 3)
         
         language = agent_config.get("language")
         if language:
@@ -77,14 +172,31 @@ async def run_bot(
                 stt_config["language"] = language
             if not tts_config.get("language"):
                 tts_config["language"] = language
+
+        org_id = agent_config.get("org_id")
      
-        llm = create_llm_service(llm_config)
-        stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer)
-        tts = create_tts_service(tts_config, sample_rate)
+        llm = create_llm_service(
+            llm_config,
+            vistaar_session_id=vistaar_session_id,
+            language=agent_config.get("language"),
+            org_id=org_id,
+        )
+        stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer, org_id=org_id)
+        tts = create_tts_service(tts_config, sample_rate, org_id=org_id)
+        
+        # Use fast aggregator (no lookahead/NLTK) for lower latency
+        tts._aggregate_sentences = True
+        tts._text_aggregator = FastPunctuationAggregator()
 
         system_prompt = agent_config.get("system_prompt", None)
         context = OpenAILLMContext([{"role": "system", "content": system_prompt}])
-        context_aggregator = llm.create_context_aggregator(context)
+        
+        # Use stored user aggregator params if available (for OpenAI services)
+        user_params = getattr(llm, "_user_aggregator_params", None)
+        if user_params:
+            context_aggregator = llm.create_context_aggregator(context, user_params=user_params)
+        else:
+            context_aggregator = llm.create_context_aggregator(context)
         
         greeting_filter = GreetingInterruptionFilter()
         
@@ -96,9 +208,9 @@ async def run_bot(
             context_aggregator.user(),
             llm,
             tts,
-            transport.output(),
             transcript.assistant(),
             audiobuffer,
+            transport.output(),
             context_aggregator.assistant(),
         ])
         
@@ -148,6 +260,15 @@ async def bot(
     """Main bot entry point - sets up transport and runs the pipeline."""
     sample_rate = _get_sample_rate()
     session_timeout = agent_config.get("session_timeout_minutes", 10) * 60
+
+    import time
+    original_send = websocket_client.send_text
+    async def timed_send(data):
+        if "playAudio" in str(data)[:50]:
+            #logger.info(f"📤 WS SEND: {len(data)} bytes at {time.perf_counter()*1000:.0f}ms")
+            pass
+        return await original_send(data)
+    websocket_client.send_text = timed_send
     
     # Track call start time
     call_start_time = time.monotonic()
@@ -168,11 +289,18 @@ async def bot(
     vad_analyzer = SileroVADAnalyzer(
         sample_rate=sample_rate,
         params=VADParams(
-            stop_secs=0.6,
-            min_volume=0.5,
-            confidence=0.6,
+            stop_secs=0.35,
+            min_volume=0.3,
+            confidence=0.4,
+            start_secs=0.1,
         )
     )
+    vad_analyzer._smoothing_factor = 0.1  # Faster volume change response
+    import pipecat.transports.base_input
+    pipecat.transports.base_input.AUDIO_INPUT_TIMEOUT_SECS = 0.1
+
+    import pipecat.transports.base_output
+    pipecat.transports.base_output.BOT_VAD_STOP_SECS = 0.2
     
     transport = FastAPIWebsocketTransport(
         websocket=websocket_client,
@@ -184,8 +312,12 @@ async def bot(
             serializer=serializer,
             audio_in_passthrough=True,
             session_timeout=session_timeout,
+            audio_out_10ms_chunks=2,  # ADD THIS LINE - reduces from 4 to 1
         ),
     )
+
+    # Optimized first audio chunk sending
+    patch_immediate_first_chunk(transport)
     
     # Create audio buffer processor
     audiobuffer = AudioBufferProcessor()
@@ -223,7 +355,7 @@ async def bot(
             call_data["transcript_lines"].append(line)
     
     try:
-        await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer)
+        await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer, vistaar_session_id=call_sid)
     finally:
         logger.info(f"Saving call data for {call_sid}...")
         if call_data["audio_chunks"] and call_data["audio_sample_rate"] and call_data["audio_num_channels"]:
@@ -258,27 +390,105 @@ async def bot(
             call_start_time=call_start_time
         )
 
-        # Post-call webhook — used by inline (leadership-coach) calls to deliver
-        # transcript + metadata back to /api/voicera/webhook on the Next.js app.
-        webhook_url = agent_config.get("webhook_url", "")
-        if webhook_url and call_data["transcript_lines"]:
+async def ubona_bot(
+    websocket_client,
+    stream_id: str,
+    call_id: str,
+    agent_type: str,
+    agent_config: dict
+) -> None:
+    """Ubona bot entry point - sets up transport and runs the pipeline."""
+    sample_rate = 8000  # Ubona only supports 8kHz PCMU
+    session_timeout = agent_config.get("session_timeout_minutes", 10) * 60
+
+    call_start_time = time.monotonic()
+    storage = MinIOStorage.from_env()
+
+    serializer = UbonaFrameSerializer(
+        stream_id=stream_id,
+        call_id=call_id,
+        params=UbonaFrameSerializer.InputParams(sample_rate=sample_rate),
+    )
+
+    vad_analyzer = SileroVADAnalyzer(
+        sample_rate=sample_rate,
+        params=VADParams(stop_secs=0.2, min_volume=0.5, confidence=0.4, start_secs=0.1),
+    )
+    vad_analyzer._smoothing_factor = 0.1
+
+    import pipecat.transports.base_input
+    pipecat.transports.base_input.AUDIO_INPUT_TIMEOUT_SECS = 0.1
+    import pipecat.transports.base_output
+    pipecat.transports.base_output.BOT_VAD_STOP_SECS = 0.2
+
+    # Wrapper to handle ping/pong inline
+    class PingPongWrapper:
+        def __init__(self, ws):
+            self._ws = ws
+        async def receive_text(self):
+            while True:
+                data = await self._ws.receive_text()
+                try:
+                    msg = json.loads(data)
+                    if msg.get("event") == "ping":
+                        # Spec: pong must contain the same ts as ping for round-trip
+                        ping_ts = msg.get("ts", int(time.time() * 1000))
+                        await self._ws.send_text(json.dumps({"event": "pong", "ts": ping_ts}))
+                        continue
+                except:
+                    pass
+                return data
+        def __getattr__(self, name):
+            return getattr(self._ws, name)
+
+    transport = FastAPIWebsocketTransport(
+        websocket=PingPongWrapper(websocket_client),
+        params=FastAPIWebsocketParams(
+            audio_in_enabled=True,
+            audio_out_enabled=True,
+            add_wav_header=False,
+            vad_analyzer=vad_analyzer,
+            serializer=serializer,
+            audio_in_passthrough=True,
+            session_timeout=session_timeout,
+            audio_out_10ms_chunks=2,
+        ),
+    )
+
+    patch_immediate_first_chunk(transport)
+
+    audiobuffer = AudioBufferProcessor()
+    transcript = TranscriptProcessor()
+    call_data = {"audio_chunks": [], "audio_sample_rate": None, "audio_num_channels": None, "transcript_lines": []}
+
+    @audiobuffer.event_handler("on_audio_data")
+    async def on_audio_data(buffer, audio, sample_rate, num_channels):
+        call_data["audio_chunks"].append(audio)
+        if call_data["audio_sample_rate"] is None:
+            call_data["audio_sample_rate"], call_data["audio_num_channels"] = sample_rate, num_channels
+
+    @transcript.event_handler("on_transcript_update")
+    async def on_transcript_update(processor, frame):
+        for message in frame.messages:
+            ts = f"[{message.timestamp}] " if message.timestamp else ""
+            call_data["transcript_lines"].append(f"{ts}{message.role}: {message.content}")
+
+    try:
+        await run_bot(transport, agent_config, audiobuffer, transcript, vad_analyzer=vad_analyzer, vistaar_session_id=call_id)
+    finally:
+        logger.info(f"Saving call data for {call_id}...")
+        if call_data["audio_chunks"] and call_data["audio_sample_rate"]:
             try:
-                import aiohttp
-                duration_seconds = int(time.monotonic() - call_start_time)
-                transcript_text = "\n".join(call_data["transcript_lines"])
-                payload = {
-                    "callId": call_sid,
-                    "status": "completed",
-                    "endedReason": "call-ended",
-                    "transcript": transcript_text,
-                    "transcriptLines": call_data["transcript_lines"],
-                    "durationSeconds": duration_seconds,
-                    "startedAt": start_time_utc,
-                    "endedAt": datetime.utcnow().isoformat(),
-                    "metadata": agent_config.get("metadata", {}),
-                }
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(webhook_url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        logger.info(f"[webhook] POST {webhook_url} → {resp.status}")
+                await storage.save_recording_from_chunks(call_id, call_data["audio_chunks"], call_data["audio_sample_rate"], call_data["audio_num_channels"])
+                logger.info(f"Saved {len(call_data['audio_chunks'])} audio chunks")
             except Exception as e:
-                logger.error(f"[webhook] Failed to POST to {webhook_url}: {e}")
+                logger.error(f"Failed to save audio: {e}")
+
+        if call_data["transcript_lines"]:
+            try:
+                await storage.save_transcript_from_lines(call_id, call_data["transcript_lines"])
+                logger.info(f"Saved {len(call_data['transcript_lines'])} transcript lines")
+            except Exception as e:
+                logger.error(f"Failed to save transcript: {e}")
+
+        await submit_call_recording(call_sid=call_id, agent_type=agent_type, agent_config=agent_config, storage=storage, call_start_time=call_start_time)

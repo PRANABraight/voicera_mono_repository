@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getCurrentUser, getAgents, createAgent, createVobizApplication, deleteVobizApplication, deleteAgent, unlinkVobizNumber, fetchApiRoute, getIntegrations, type User, type Agent, type CreateAgentRequest, type Integration } from "@/lib/api"
+import { getCurrentUser, getAgents, createAgent, createVobizApplication, deleteVobizApplication, deleteAgent, unlinkVobizNumber, fetchApiRoute, getIntegrations, getKnowledgeDocuments, type User, type Agent, type CreateAgentRequest, type Integration, type KnowledgeDocument } from "@/lib/api"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,7 @@ import {
   Languages,
   Mic,
   Loader2,
+  Check,
   X,
 } from "lucide-react"
 
@@ -58,11 +59,13 @@ const getProviderOfficialName = (providerId: string): string => {
   const nameMap: Record<string, string> = {
     assembly: "Assembly",
     azure: "Azure",
+    anthropic: "Anthropic",
     deepgram: "Deepgram",
     elevenlabs: "Elevenlabs",
     gladia: "Gladia",
     google: "Google",
     gcp: "Google", // GCP is officially called Google
+    kenpath: "Kenpath",
     pixa: "Pixa",
     sarvam: "Sarvam",
     smallest: "Smallest",
@@ -71,6 +74,8 @@ const getProviderOfficialName = (providerId: string): string => {
     cartesia: "Cartesia",
     openai: "OpenAI",
     playht: "PlayHT",
+    groq: "Groq",
+    grok: "Grok",
   }
   return nameMap[providerId] || providerId.charAt(0).toUpperCase() + providerId.slice(1)
 }
@@ -109,6 +114,8 @@ const llmProviders = {
   anthropic: {
     name: "Anthropic",
     models: [
+      "claude-sonnet-4-5-20250929",
+      "claude-opus-4-6-20250929",
       "claude-sonnet-4-20250514",
       "claude-3-5-sonnet-20241022",
       "claude-3-5-haiku-20241022",
@@ -130,6 +137,14 @@ const llmProviders = {
       "llama-3.3-70b-versatile",
       "llama-3.1-8b-instant",
       "mixtral-8x7b-32768",
+    ],
+  },
+  grok: {
+    name: "Grok",
+    models: [
+      "grok-3-beta",
+      "grok-2-1212",
+      "grok-2-vision-1212",
     ],
   },
 }
@@ -160,6 +175,9 @@ interface AgentConfig {
   systemPrompt: string
   llmProvider: string
   llmModel: string
+  knowledgeEnabled: boolean
+  knowledgeDocumentIds: string[]
+  knowledgeTopK: number
   temperature: number
   maxTokens: number
   language: string
@@ -184,6 +202,9 @@ const defaultConfig: AgentConfig = {
   systemPrompt: "You are a helpful agent. You will help the customer with their queries and doubts. You will never speak more than 2 sentences. Keep your responses concise",
   llmProvider: "openai",
   llmModel: "gpt-4o",
+  knowledgeEnabled: false,
+  knowledgeDocumentIds: [],
+  knowledgeTopK: 3,
   temperature: 0.2,
   maxTokens: 450,
   language: "Hindi",
@@ -224,6 +245,8 @@ export default function AssistantsPage() {
   const [selectedAgentForTest, setSelectedAgentForTest] = useState<Agent | null>(null)
   const [showDeleteSuccessToast, setShowDeleteSuccessToast] = useState(false)
   const [integratedProviders, setIntegratedProviders] = useState<Set<string>>(new Set())
+  const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDocument[]>([])
+  const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false)
 
   // Fetch user data, agents, and integrations on mount
   useEffect(() => {
@@ -249,6 +272,16 @@ export default function AssistantsPage() {
           setIntegratedProviders(integrated)
         } catch (intError) {
           console.error("Failed to fetch integrations:", intError)
+        }
+        try {
+          setIsKnowledgeLoading(true)
+          const docs = await getKnowledgeDocuments()
+          setKnowledgeDocs(docs.filter((d) => d.status === "ready"))
+        } catch (kbError) {
+          console.error("Failed to fetch knowledge docs:", kbError)
+          setKnowledgeDocs([])
+        } finally {
+          setIsKnowledgeLoading(false)
         }
       } catch (error) {
         console.error("Failed to fetch data:", error)
@@ -622,12 +655,33 @@ export default function AssistantsPage() {
       }
       if (key === "llmProvider") {
         updated.llmModel = ""
+        if ((value as string) !== "openai") {
+          updated.knowledgeEnabled = false
+          updated.knowledgeDocumentIds = []
+        }
       }
       return updated
     })
   }
 
   const nameSnakeCase = config.name.toLowerCase().replace(/ /g, "_")
+  const selectedKnowledgeDocs = useMemo(
+    () =>
+      knowledgeDocs.filter((d) => config.knowledgeDocumentIds.includes(d.document_id)),
+    [knowledgeDocs, config.knowledgeDocumentIds]
+  )
+
+  const toggleKnowledgeDocument = (documentId: string) => {
+    setConfig((prev) => {
+      const exists = prev.knowledgeDocumentIds.includes(documentId)
+      return {
+        ...prev,
+        knowledgeDocumentIds: exists
+          ? prev.knowledgeDocumentIds.filter((id) => id !== documentId)
+          : [...prev.knowledgeDocumentIds, documentId],
+      }
+    })
+  }
 
   // Handle save agent
   const handleSaveAgent = async () => {
@@ -673,7 +727,7 @@ export default function AssistantsPage() {
         ...(config.ttsProvider !== "cartesia" && config.ttsProvider !== "gcp" && config.ttsModel && { model: config.ttsModel }),
         speaker: (config.ttsProvider === "cartesia" || config.ttsProvider === "gcp") ? "" : (config.ttsVoice || ""),
       }
-      if (config.ttsProvider === "ai4bharat" && config.ttsDescription) {
+      if ((config.ttsProvider === "ai4bharat" || config.ttsProvider === "bhashini") && config.ttsDescription) {
         ttsModel.description = config.ttsDescription
       }
       if (config.ttsProvider === "gcp" || config.ttsProvider === "cartesia" || config.ttsProvider === "sarvam") {
@@ -717,6 +771,12 @@ export default function AssistantsPage() {
           greeting_message: config.greetingMessage,
           session_timeout_minutes: 10,
           language: languageName,
+          knowledge_base_enabled: config.llmProvider === "openai" ? config.knowledgeEnabled : false,
+          knowledge_document_ids:
+            config.llmProvider === "openai" && config.knowledgeEnabled
+              ? config.knowledgeDocumentIds
+              : [],
+          knowledge_top_k: config.knowledgeTopK,
           llm_model: llmModel,
           stt_model: sttModel,
           tts_model: ttsModel,
@@ -1135,6 +1195,91 @@ export default function AssistantsPage() {
                     </div>
                   )}
 
+                  {config.llmProvider === "openai" && (
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-base font-bold text-slate-900">Knowledge Base</p>
+                          <p className="text-sm text-slate-500">
+                            Enable retrieval from selected knowledge documents.
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={config.knowledgeEnabled}
+                            onChange={() =>
+                              updateConfig(
+                                "knowledgeEnabled",
+                                !config.knowledgeEnabled
+                              )
+                            }
+                          />
+                          <div
+                            className="w-11 h-6 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer-checked:bg-emerald-600 transition-colors"
+                          />
+                          <div
+                            className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"
+                          />
+                        </label>
+                      </div>
+                      {config.knowledgeEnabled && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-semibold text-slate-700">
+                              Select knowledge documents
+                            </label>
+                            <span className="text-xs text-slate-500">
+                              {selectedKnowledgeDocs.length} selected
+                            </span>
+                          </div>
+                          {isKnowledgeLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading knowledge documents...
+                            </div>
+                          ) : knowledgeDocs.length === 0 ? (
+                            <p className="text-sm text-slate-500">
+                              No ready knowledge documents found. Upload and process files in Knowledge Base.
+                            </p>
+                          ) : (
+                            <div className="max-h-44 overflow-auto rounded-lg border border-slate-200 bg-slate-50 divide-y divide-slate-200">
+                              {knowledgeDocs.map((doc) => {
+                                const checked = config.knowledgeDocumentIds.includes(doc.document_id)
+                                return (
+                                  <button
+                                    key={doc.document_id}
+                                    type="button"
+                                    onClick={() => toggleKnowledgeDocument(doc.document_id)}
+                                    className="w-full px-3 py-2 text-left hover:bg-slate-100 transition flex items-center gap-3"
+                                  >
+                                    <span
+                                      aria-hidden
+                                      className={[
+                                        "h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors",
+                                        checked
+                                          ? "bg-emerald-600 border-emerald-600"
+                                          : "bg-white border-slate-300",
+                                      ].join(" ")}
+                                    >
+                                      {checked && (
+                                        <Check className="h-3 w-3 text-white" />
+                                      )}
+                                    </span>
+                                    <span className="text-sm text-slate-800 truncate">
+                                      {doc.original_filename}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {config.llmProvider && availableLLMModels.length === 0 && (
                     <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
                       <p className="text-slate-600 text-sm">
@@ -1391,8 +1536,8 @@ export default function AssistantsPage() {
                         </div>
                       </div>
 
-                      {/* TTS Description for AI4Bharat */}
-                      {config.ttsProvider === "ai4bharat" && (
+                      {/* TTS Description for AI4Bharat and Bhashini */}
+                      {(config.ttsProvider === "ai4bharat" || config.ttsProvider === "bhashini") && (
                         <div className="space-y-2 pt-3">
                           <label className="text-sm font-semibold text-slate-700">Voice Description</label>
                           <Select value={config.ttsDescription} onValueChange={(v) => updateConfig("ttsDescription", v)}>
@@ -1504,10 +1649,10 @@ export default function AssistantsPage() {
                         </div>
                       )}
 
-                      {config.ttsProvider === "ai4bharat" && (
+                      {(config.ttsProvider === "ai4bharat" || config.ttsProvider === "bhashini") && (
                         <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                           <p className="text-sm text-slate-600">
-                            <span className="font-medium">AI4Bharat</span> uses description-based voice control. Select a voice description above to customize pitch, pace, and expression characteristics.
+                            <span className="font-medium">{config.ttsProvider === "ai4bharat" ? "AI4Bharat" : "Bhashini"}</span> uses description-based voice control. Select a voice description above to customize pitch, pace, and expression characteristics.
                           </p>
                         </div>
                       )}
@@ -1617,6 +1762,14 @@ export default function AssistantsPage() {
                       {config.llmProvider !== "kenpath" && (
                         <p className="text-sm text-slate-500 mt-1">
                           Tokens: {config.maxTokens} • Temperature: {config.temperature.toFixed(1)}
+                        </p>
+                      )}
+                      {config.llmProvider === "openai" && (
+                        <p className="text-sm text-slate-500 mt-1">
+                          Knowledge Base:{" "}
+                          {config.knowledgeEnabled
+                            ? `${selectedKnowledgeDocs.length} document(s) selected`
+                            : "Disabled"}
                         </p>
                       )}
                     </div>

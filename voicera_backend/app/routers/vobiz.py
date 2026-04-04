@@ -60,7 +60,7 @@ async def get_vobiz_numbers(
             detail="Vobiz API credentials are not configured"
         )
     
-    # Construct the Vobiz API URL
+    # Construct the Vobiz API URL - use VOBIZ_ACCOUNT_ID in the path
     url = f"{settings.VOBIZ_API_BASE_URL}/account/{settings.VOBIZ_AUTH_ID}/numbers"
     
     # Prepare headers
