@@ -257,9 +257,11 @@ async def bot(
     agent_type: str,
     agent_config: dict,
     transcript_callback: Optional[Callable[[str, str, Optional[str]], Awaitable[None]]] = None,
+    force_sample_rate: Optional[int] = None,
 ) -> None:
     """Main bot entry point - sets up transport and runs the pipeline."""
-    sample_rate = _get_sample_rate()
+    # Browser sessions always use 16kHz L16; telephony uses SAMPLE_RATE env var (default 8kHz)
+    sample_rate = force_sample_rate or _get_sample_rate()
     session_timeout = agent_config.get("session_timeout_minutes", 10) * 60
 
     import time

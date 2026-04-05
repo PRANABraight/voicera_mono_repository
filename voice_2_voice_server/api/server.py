@@ -322,6 +322,7 @@ async def browser_session_websocket(websocket: WebSocket, session_id: str):
             agent_config.get("agent_type", "web_session"),
             agent_config,
             transcript_callback=send_transcript,
+            force_sample_rate=16000,  # Browser always sends 16kHz L16 PCM
         )
 
     except Exception as e:
