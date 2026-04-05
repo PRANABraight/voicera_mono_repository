@@ -142,13 +142,14 @@ async def run_bot(
     """Run the voice bot pipeline with the given configuration."""
     start_time = time.monotonic()
     sample_rate = sample_rate or _get_sample_rate()
-    
-    logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
+
+    llm_config = dict(agent_config.get("llm_model", {}) or {})
+    stt_config = agent_config.get("stt_model", {})
+    tts_config = agent_config.get("tts_model", {})
+
+    logger.info(f"🚀 run_bot starting | sample_rate={sample_rate} | llm={llm_config.get('name')} | stt={stt_config.get('name')} | tts={tts_config.get('name')}")
     
     try:
-        llm_config = dict(agent_config.get("llm_model", {}) or {})
-        stt_config = agent_config.get("stt_model", {})
-        tts_config = agent_config.get("tts_model", {})
         llm_provider_name = str(llm_config.get("name") or "").strip().lower()
         if llm_provider_name == "openai":
             llm_config["knowledge_base_enabled"] = bool(
@@ -167,21 +168,30 @@ async def run_bot(
                 tts_config["language"] = language
 
         org_id = agent_config.get("org_id")
-     
+
+        logger.info(f"🔧 Creating LLM: provider={llm_config.get('name')!r} model={llm_config.get('args', {}).get('model')!r}")
         llm = create_llm_service(
             llm_config,
             vistaar_session_id=vistaar_session_id,
             language=agent_config.get("language"),
             org_id=org_id,
         )
+        logger.info(f"✅ LLM created: {type(llm).__name__}")
+
+        logger.info(f"🔧 Creating STT: provider={stt_config.get('name')!r} lang={stt_config.get('language')!r} sample_rate={sample_rate}")
         stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer, org_id=org_id)
+        logger.info(f"✅ STT created: {type(stt).__name__}")
+
+        logger.info(f"🔧 Creating TTS: provider={tts_config.get('name')!r} args={tts_config.get('args')}")
         tts = create_tts_service(tts_config, sample_rate, org_id=org_id)
+        logger.info(f"✅ TTS created: {type(tts).__name__}")
         
         # Use fast aggregator (no lookahead/NLTK) for lower latency
         tts._aggregate_sentences = True
         tts._text_aggregator = FastPunctuationAggregator()
 
         system_prompt = agent_config.get("system_prompt", None)
+        logger.info(f"📝 System prompt length: {len(system_prompt) if system_prompt else 0} chars")
         context = OpenAILLMContext([{"role": "system", "content": system_prompt}])
         
         # Use stored user aggregator params if available (for OpenAI services)
@@ -214,33 +224,35 @@ async def run_bot(
 
         @transport.event_handler("on_client_connected")
         async def on_client_connected(transport, client):
-            logger.info("Client connected")
+            logger.info("✅ Client connected to pipeline")
             await audiobuffer.start_recording()
             greeting = agent_config.get("greeting_message", '')
             if len(greeting.strip()) > 1:
-                logger.info(f"greeting: {greeting}")
+                logger.info(f"🗣️ Queuing greeting: {greeting[:80]}")
                 greeting_filter.start_greeting()
                 await task.queue_frames([TTSSpeakFrame(greeting)])
         
         @transport.event_handler("on_client_disconnected")
         async def on_client_disconnected(transport, client):
-            logger.info("Client disconnected")
+            logger.info("🔌 Client disconnected from pipeline")
             await task.cancel()
-            
-        
+
+        logger.info("▶️ Starting pipeline runner...")
         runner = PipelineRunner(handle_sigint=handle_sigint)
         await runner.run(task)
+        logger.info("⏹️ Pipeline runner finished")
         
     except ServiceCreationError as e:
-        logger.error(f"Service creation failed: {e}")
+        logger.error(f"❌ Service creation failed: {e}")
+        logger.error(traceback.format_exc())
         raise
     except Exception as e:
-        logger.error(f"Pipeline error: {type(e).__name__}: {e}")
-        logger.debug(traceback.format_exc())
+        logger.error(f"❌ Pipeline error: {type(e).__name__}: {e}")
+        logger.error(traceback.format_exc())
         raise
     finally:
         duration = time.monotonic() - start_time
-        logger.info(f"Call ended after {duration:.1f}s")
+        logger.info(f"⏱️ run_bot finished after {duration:.1f}s")
 
 
 async def bot(

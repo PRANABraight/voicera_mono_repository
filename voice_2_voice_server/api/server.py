@@ -326,8 +326,8 @@ async def browser_session_websocket(websocket: WebSocket, session_id: str):
         )
 
     except Exception as e:
-        logger.error(f"❌ Browser session WebSocket error: {e}")
-        logger.debug(traceback.format_exc())
+        logger.error(f"❌ Browser session WebSocket error: {type(e).__name__}: {e}")
+        logger.error(traceback.format_exc())
     finally:
         _web_sessions.pop(session_id, None)
         logger.info(f"🔌 Browser session WebSocket closed: call_sid={call_sid}")
