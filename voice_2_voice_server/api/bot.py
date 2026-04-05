@@ -300,7 +300,10 @@ async def bot(
     )
     vad_analyzer._smoothing_factor = 0.1  # Faster volume change response
     import pipecat.transports.base_input
-    pipecat.transports.base_input.AUDIO_INPUT_TIMEOUT_SECS = 0.1
+    # For browser sessions, silence frames are sent while muted — use a generous timeout
+    # so the session stays alive when the user is listening to Mira speak
+    audio_timeout = 30.0 if force_sample_rate else 0.1
+    pipecat.transports.base_input.AUDIO_INPUT_TIMEOUT_SECS = audio_timeout
 
     import pipecat.transports.base_output
     pipecat.transports.base_output.BOT_VAD_STOP_SECS = 0.2
@@ -315,7 +318,7 @@ async def bot(
             serializer=serializer,
             audio_in_passthrough=True,
             session_timeout=session_timeout,
-            audio_out_10ms_chunks=2,  # ADD THIS LINE - reduces from 4 to 1
+            audio_out_10ms_chunks=2,
         ),
     )
 
