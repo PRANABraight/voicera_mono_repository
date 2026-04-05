@@ -87,6 +87,11 @@ def create_llm_service(
                 )
         else:
             api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ServiceCreationError(
+                    "OPENAI_API_KEY environment variable is not set. "
+                    "Add it to your Render environment variables."
+                )
 
         # Extract user aggregator params from config, with defaults
         user_aggregator_params = LLMUserAggregatorParams(
@@ -255,6 +260,11 @@ def create_stt_service(
                 )
         else:
             api_key = os.getenv("DEEPGRAM_API_KEY")
+            if not api_key:
+                raise ServiceCreationError(
+                    "DEEPGRAM_API_KEY environment variable is not set. "
+                    "Add it to your Render environment variables."
+                )
         return DeepgramSTTService(
             api_key=api_key,
             sample_rate=sample_rate,
@@ -466,6 +476,11 @@ def create_tts_service(
                 )
         else:
             api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ServiceCreationError(
+                    "OPENAI_API_KEY environment variable is not set. "
+                    "Add it to your Render environment variables."
+                )
         return OpenAITTSService(
             api_key=api_key,
             voice=voice

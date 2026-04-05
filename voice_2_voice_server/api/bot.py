@@ -142,14 +142,13 @@ async def run_bot(
     """Run the voice bot pipeline with the given configuration."""
     start_time = time.monotonic()
     sample_rate = sample_rate or _get_sample_rate()
-
-    llm_config = dict(agent_config.get("llm_model", {}) or {})
-    stt_config = agent_config.get("stt_model", {})
-    tts_config = agent_config.get("tts_model", {})
-
-    logger.info(f"🚀 run_bot starting | sample_rate={sample_rate} | llm={llm_config.get('name')} | stt={stt_config.get('name')} | tts={tts_config.get('name')}")
+    
+    logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
     
     try:
+        llm_config = dict(agent_config.get("llm_model", {}) or {})
+        stt_config = agent_config.get("stt_model", {})
+        tts_config = agent_config.get("tts_model", {})
         llm_provider_name = str(llm_config.get("name") or "").strip().lower()
         if llm_provider_name == "openai":
             llm_config["knowledge_base_enabled"] = bool(
@@ -168,30 +167,25 @@ async def run_bot(
                 tts_config["language"] = language
 
         org_id = agent_config.get("org_id")
-
-        logger.info(f"🔧 Creating LLM: provider={llm_config.get('name')!r} model={llm_config.get('args', {}).get('model')!r}")
+     
         llm = create_llm_service(
             llm_config,
             vistaar_session_id=vistaar_session_id,
             language=agent_config.get("language"),
             org_id=org_id,
         )
-        logger.info(f"✅ LLM created: {type(llm).__name__}")
-
-        logger.info(f"🔧 Creating STT: provider={stt_config.get('name')!r} lang={stt_config.get('language')!r} sample_rate={sample_rate}")
         stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer, org_id=org_id)
-        logger.info(f"✅ STT created: {type(stt).__name__}")
-
-        logger.info(f"🔧 Creating TTS: provider={tts_config.get('name')!r} args={tts_config.get('args')}")
         tts = create_tts_service(tts_config, sample_rate, org_id=org_id)
-        logger.info(f"✅ TTS created: {type(tts).__name__}")
         
-        # Use fast aggregator (no lookahead/NLTK) for lower latency
-        tts._aggregate_sentences = True
-        tts._text_aggregator = FastPunctuationAggregator()
+        # Use fast aggregator (no lookahead/NLTK) for lower latency — guard in case
+        # TTS service version doesn't support these attributes
+        try:
+            tts._aggregate_sentences = True
+            tts._text_aggregator = FastPunctuationAggregator()
+        except Exception as e:
+            logger.warning(f"⚠️ Could not set fast aggregator on TTS: {e}")
 
         system_prompt = agent_config.get("system_prompt", None)
-        logger.info(f"📝 System prompt length: {len(system_prompt) if system_prompt else 0} chars")
         context = OpenAILLMContext([{"role": "system", "content": system_prompt}])
         
         # Use stored user aggregator params if available (for OpenAI services)
@@ -224,35 +218,33 @@ async def run_bot(
 
         @transport.event_handler("on_client_connected")
         async def on_client_connected(transport, client):
-            logger.info("✅ Client connected to pipeline")
+            logger.info("Client connected")
             await audiobuffer.start_recording()
             greeting = agent_config.get("greeting_message", '')
             if len(greeting.strip()) > 1:
-                logger.info(f"🗣️ Queuing greeting: {greeting[:80]}")
+                logger.info(f"greeting: {greeting}")
                 greeting_filter.start_greeting()
                 await task.queue_frames([TTSSpeakFrame(greeting)])
         
         @transport.event_handler("on_client_disconnected")
         async def on_client_disconnected(transport, client):
-            logger.info("🔌 Client disconnected from pipeline")
+            logger.info("Client disconnected")
             await task.cancel()
-
-        logger.info("▶️ Starting pipeline runner...")
+            
+        
         runner = PipelineRunner(handle_sigint=handle_sigint)
         await runner.run(task)
-        logger.info("⏹️ Pipeline runner finished")
         
     except ServiceCreationError as e:
-        logger.error(f"❌ Service creation failed: {e}")
-        logger.error(traceback.format_exc())
+        logger.error(f"Service creation failed: {e}")
         raise
     except Exception as e:
-        logger.error(f"❌ Pipeline error: {type(e).__name__}: {e}")
-        logger.error(traceback.format_exc())
+        logger.error(f"Pipeline error: {type(e).__name__}: {e}")
+        logger.debug(traceback.format_exc())
         raise
     finally:
         duration = time.monotonic() - start_time
-        logger.info(f"⏱️ run_bot finished after {duration:.1f}s")
+        logger.info(f"Call ended after {duration:.1f}s")
 
 
 async def bot(
@@ -281,9 +273,13 @@ async def bot(
     # Track call start time
     call_start_time = time.monotonic()
     start_time_utc = datetime.utcnow().isoformat()
-    
-    # Initialize MinIO storage
-    storage = MinIOStorage.from_env()
+
+    # Initialize MinIO storage — non-fatal if MinIO is unreachable
+    storage = None
+    try:
+        storage = MinIOStorage.from_env()
+    except Exception as e:
+        logger.warning(f"⚠️ MinIO unavailable, call recording disabled: {e}")
     
     serializer = VobizFrameSerializer(
         stream_sid=stream_sid,
@@ -373,38 +369,41 @@ async def bot(
     try:
         await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer, vistaar_session_id=call_sid, sample_rate=sample_rate)
     finally:
-        logger.info(f"Saving call data for {call_sid}...")
-        if call_data["audio_chunks"] and call_data["audio_sample_rate"] and call_data["audio_num_channels"]:
-            try:
-                await storage.save_recording_from_chunks(
-                    call_sid, 
-                    call_data["audio_chunks"], 
-                    call_data["audio_sample_rate"], 
-                    call_data["audio_num_channels"]
-                )
-                total_bytes = sum(len(c) for c in call_data["audio_chunks"])
-                logger.info(f" Saved {len(call_data['audio_chunks'])} audio chunks ({total_bytes} bytes)")
-            except Exception as e:
-                logger.error(f"Failed to save audio recording: {e}")
+        if storage is None:
+            logger.warning(f"Skipping call recording save (MinIO unavailable): {call_sid}")
         else:
-            logger.warning(f"No audio data to save for {call_sid}")
+            logger.info(f"Saving call data for {call_sid}...")
+            if call_data["audio_chunks"] and call_data["audio_sample_rate"] and call_data["audio_num_channels"]:
+                try:
+                    await storage.save_recording_from_chunks(
+                        call_sid,
+                        call_data["audio_chunks"],
+                        call_data["audio_sample_rate"],
+                        call_data["audio_num_channels"]
+                    )
+                    total_bytes = sum(len(c) for c in call_data["audio_chunks"])
+                    logger.info(f"Saved {len(call_data['audio_chunks'])} audio chunks ({total_bytes} bytes)")
+                except Exception as e:
+                    logger.error(f"Failed to save audio recording: {e}")
+            else:
+                logger.warning(f"No audio data to save for {call_sid}")
 
-        if call_data["transcript_lines"]:
-            try:
-                await storage.save_transcript_from_lines(call_sid, call_data["transcript_lines"])
-                logger.info(f" Saved {len(call_data['transcript_lines'])} transcript lines")
-            except Exception as e:
-                logger.error(f" Failed to save transcript: {e}")
-        else:
-            logger.warning(f"No transcript data to save for {call_sid}")
-        
-        await submit_call_recording(
-            call_sid=call_sid,
-            agent_type=agent_type,
-            agent_config=agent_config,
-            storage=storage,
-            call_start_time=call_start_time
-        )
+            if call_data["transcript_lines"]:
+                try:
+                    await storage.save_transcript_from_lines(call_sid, call_data["transcript_lines"])
+                    logger.info(f"Saved {len(call_data['transcript_lines'])} transcript lines")
+                except Exception as e:
+                    logger.error(f"Failed to save transcript: {e}")
+            else:
+                logger.warning(f"No transcript data to save for {call_sid}")
+
+            await submit_call_recording(
+                call_sid=call_sid,
+                agent_type=agent_type,
+                agent_config=agent_config,
+                storage=storage,
+                call_start_time=call_start_time
+            )
 
 async def ubona_bot(
     websocket_client,

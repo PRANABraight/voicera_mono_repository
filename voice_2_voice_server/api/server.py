@@ -326,7 +326,7 @@ async def browser_session_websocket(websocket: WebSocket, session_id: str):
         )
 
     except Exception as e:
-        logger.error(f"❌ Browser session WebSocket error: {type(e).__name__}: {e}")
+        logger.error(f"❌ Browser session WebSocket error: {e}")
         logger.error(traceback.format_exc())
     finally:
         _web_sessions.pop(session_id, None)
