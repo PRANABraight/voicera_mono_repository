@@ -137,18 +137,11 @@ async def run_bot(
     handle_sigint: bool = False,
     vad_analyzer: Any = None,
     vistaar_session_id: Optional[str] = None,
+    sample_rate: Optional[int] = None,
 ) -> None:
-    """Run the voice bot pipeline with the given configuration.
-    
-    Args:
-        transport: WebSocket transport for audio I/O
-        agent_config: Agent configuration dictionary
-        audiobuffer: Audio buffer processor for recording
-        transcript: Transcript processor for saving transcripts
-        handle_sigint: Whether to handle SIGINT for graceful shutdown
-    """
+    """Run the voice bot pipeline with the given configuration."""
     start_time = time.monotonic()
-    sample_rate = _get_sample_rate()
+    sample_rate = sample_rate or _get_sample_rate()
     
     logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
     
@@ -366,7 +359,7 @@ async def bot(
                     logger.debug(f"Transcript callback failed: {callback_error}")
     
     try:
-        await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer, vistaar_session_id=call_sid)
+        await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer, vistaar_session_id=call_sid, sample_rate=sample_rate)
     finally:
         logger.info(f"Saving call data for {call_sid}...")
         if call_data["audio_chunks"] and call_data["audio_sample_rate"] and call_data["audio_num_channels"]:
