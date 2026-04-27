@@ -3,3 +3,7 @@ __pycache__/
 *.pyo
 files/
 local_files/
+ai4bharat_tts_server/checkpoints/
+
+api_setup.txt
+screenshots_report_final.docx
