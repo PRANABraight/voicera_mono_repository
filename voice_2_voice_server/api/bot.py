@@ -21,7 +21,7 @@ from pipecat.processors.transcript_processor import TranscriptProcessor
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.utils.text.base_text_aggregator import BaseTextAggregator, Aggregation, AggregationType
-from typing import Any, Optional, Callable, Awaitable
+from typing import Any, Optional
 from pipecat.transports.websocket.fastapi import (
     FastAPIWebsocketParams,
     FastAPIWebsocketTransport,
@@ -137,11 +137,18 @@ async def run_bot(
     handle_sigint: bool = False,
     vad_analyzer: Any = None,
     vistaar_session_id: Optional[str] = None,
-    sample_rate: Optional[int] = None,
 ) -> None:
-    """Run the voice bot pipeline with the given configuration."""
+    """Run the voice bot pipeline with the given configuration.
+    
+    Args:
+        transport: WebSocket transport for audio I/O
+        agent_config: Agent configuration dictionary
+        audiobuffer: Audio buffer processor for recording
+        transcript: Transcript processor for saving transcripts
+        handle_sigint: Whether to handle SIGINT for graceful shutdown
+    """
     start_time = time.monotonic()
-    sample_rate = sample_rate or _get_sample_rate()
+    sample_rate = _get_sample_rate()
     
     logger.debug(f"Agent config: {json.dumps(agent_config, indent=2, default=str)}")
     
@@ -177,13 +184,9 @@ async def run_bot(
         stt = create_stt_service(stt_config, sample_rate, vad_analyzer=vad_analyzer, org_id=org_id)
         tts = create_tts_service(tts_config, sample_rate, org_id=org_id)
         
-        # Use fast aggregator (no lookahead/NLTK) for lower latency — guard in case
-        # TTS service version doesn't support these attributes
-        try:
-            tts._aggregate_sentences = True
-            tts._text_aggregator = FastPunctuationAggregator()
-        except Exception as e:
-            logger.warning(f"⚠️ Could not set fast aggregator on TTS: {e}")
+        # Use fast aggregator (no lookahead/NLTK) for lower latency
+        tts._aggregate_sentences = True
+        tts._text_aggregator = FastPunctuationAggregator()
 
         system_prompt = agent_config.get("system_prompt", None)
         context = OpenAILLMContext([{"role": "system", "content": system_prompt}])
@@ -252,13 +255,10 @@ async def bot(
     stream_sid: str,
     call_sid: str,
     agent_type: str,
-    agent_config: dict,
-    transcript_callback: Optional[Callable[[str, str, Optional[str]], Awaitable[None]]] = None,
-    force_sample_rate: Optional[int] = None,
+    agent_config: dict
 ) -> None:
     """Main bot entry point - sets up transport and runs the pipeline."""
-    # Browser sessions always use 16kHz L16; telephony uses SAMPLE_RATE env var (default 8kHz)
-    sample_rate = force_sample_rate or _get_sample_rate()
+    sample_rate = _get_sample_rate()
     session_timeout = agent_config.get("session_timeout_minutes", 10) * 60
 
     import time
@@ -273,13 +273,9 @@ async def bot(
     # Track call start time
     call_start_time = time.monotonic()
     start_time_utc = datetime.utcnow().isoformat()
-
-    # Initialize MinIO storage — non-fatal if MinIO is unreachable
-    storage = None
-    try:
-        storage = MinIOStorage.from_env()
-    except Exception as e:
-        logger.warning(f"⚠️ MinIO unavailable, call recording disabled: {e}")
+    
+    # Initialize MinIO storage
+    storage = MinIOStorage.from_env()
     
     serializer = VobizFrameSerializer(
         stream_sid=stream_sid,
@@ -301,10 +297,7 @@ async def bot(
     )
     vad_analyzer._smoothing_factor = 0.1  # Faster volume change response
     import pipecat.transports.base_input
-    # For browser sessions, silence frames are sent while muted — use a generous timeout
-    # so the session stays alive when the user is listening to Mira speak
-    audio_timeout = 30.0 if force_sample_rate else 0.1
-    pipecat.transports.base_input.AUDIO_INPUT_TIMEOUT_SECS = audio_timeout
+    pipecat.transports.base_input.AUDIO_INPUT_TIMEOUT_SECS = 0.1
 
     import pipecat.transports.base_output
     pipecat.transports.base_output.BOT_VAD_STOP_SECS = 0.2
@@ -319,7 +312,7 @@ async def bot(
             serializer=serializer,
             audio_in_passthrough=True,
             session_timeout=session_timeout,
-            audio_out_10ms_chunks=2,
+            audio_out_10ms_chunks=2,  # ADD THIS LINE - reduces from 4 to 1
         ),
     )
 
@@ -360,50 +353,42 @@ async def bot(
             line = f"{timestamp}{message.role}: {message.content}"
             logger.info(f"Transcript: {line}")
             call_data["transcript_lines"].append(line)
-            if transcript_callback and message.content:
-                try:
-                    await transcript_callback(message.role, message.content, message.timestamp)
-                except Exception as callback_error:
-                    logger.debug(f"Transcript callback failed: {callback_error}")
     
     try:
-        await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer, vistaar_session_id=call_sid, sample_rate=sample_rate)
+        await run_bot(transport, agent_config, audiobuffer, transcript, handle_sigint=False, vad_analyzer=vad_analyzer, vistaar_session_id=call_sid)
     finally:
-        if storage is None:
-            logger.warning(f"Skipping call recording save (MinIO unavailable): {call_sid}")
+        logger.info(f"Saving call data for {call_sid}...")
+        if call_data["audio_chunks"] and call_data["audio_sample_rate"] and call_data["audio_num_channels"]:
+            try:
+                await storage.save_recording_from_chunks(
+                    call_sid, 
+                    call_data["audio_chunks"], 
+                    call_data["audio_sample_rate"], 
+                    call_data["audio_num_channels"]
+                )
+                total_bytes = sum(len(c) for c in call_data["audio_chunks"])
+                logger.info(f" Saved {len(call_data['audio_chunks'])} audio chunks ({total_bytes} bytes)")
+            except Exception as e:
+                logger.error(f"Failed to save audio recording: {e}")
         else:
-            logger.info(f"Saving call data for {call_sid}...")
-            if call_data["audio_chunks"] and call_data["audio_sample_rate"] and call_data["audio_num_channels"]:
-                try:
-                    await storage.save_recording_from_chunks(
-                        call_sid,
-                        call_data["audio_chunks"],
-                        call_data["audio_sample_rate"],
-                        call_data["audio_num_channels"]
-                    )
-                    total_bytes = sum(len(c) for c in call_data["audio_chunks"])
-                    logger.info(f"Saved {len(call_data['audio_chunks'])} audio chunks ({total_bytes} bytes)")
-                except Exception as e:
-                    logger.error(f"Failed to save audio recording: {e}")
-            else:
-                logger.warning(f"No audio data to save for {call_sid}")
+            logger.warning(f"No audio data to save for {call_sid}")
 
-            if call_data["transcript_lines"]:
-                try:
-                    await storage.save_transcript_from_lines(call_sid, call_data["transcript_lines"])
-                    logger.info(f"Saved {len(call_data['transcript_lines'])} transcript lines")
-                except Exception as e:
-                    logger.error(f"Failed to save transcript: {e}")
-            else:
-                logger.warning(f"No transcript data to save for {call_sid}")
-
-            await submit_call_recording(
-                call_sid=call_sid,
-                agent_type=agent_type,
-                agent_config=agent_config,
-                storage=storage,
-                call_start_time=call_start_time
-            )
+        if call_data["transcript_lines"]:
+            try:
+                await storage.save_transcript_from_lines(call_sid, call_data["transcript_lines"])
+                logger.info(f" Saved {len(call_data['transcript_lines'])} transcript lines")
+            except Exception as e:
+                logger.error(f" Failed to save transcript: {e}")
+        else:
+            logger.warning(f"No transcript data to save for {call_sid}")
+        
+        await submit_call_recording(
+            call_sid=call_sid,
+            agent_type=agent_type,
+            agent_config=agent_config,
+            storage=storage,
+            call_start_time=call_start_time
+        )
 
 async def ubona_bot(
     websocket_client,

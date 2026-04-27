@@ -63,20 +63,12 @@ def create_llm_service(
         ServiceCreationError: If the LLM provider is unknown
     """
     provider = llm_config.get("name") or llm_config.get("provider")
-    args = llm_config.get("args", {})
-    model = args.get("model") or llm_config.get("model")
-
-    # Normalise provider name — accept lowercase/mixed case from callers
-    _llm_provider_map = {
-        "openai": "OpenAI",
-        "anthropic": "Anthropic",
-        "grok": "Grok",
-        "kenpath": "Kenpath",
-    }
     if isinstance(provider, str):
-        provider_normalized = _llm_provider_map.get(provider.strip().lower(), provider.strip())
+        provider_normalized = provider.strip()
     else:
         provider_normalized = provider
+    args = llm_config.get("args", {})
+    model = args.get("model") or llm_config.get("model")
 
     if provider_normalized == "OpenAI":
         if org_id:
@@ -87,11 +79,6 @@ def create_llm_service(
                 )
         else:
             api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key:
-                raise ServiceCreationError(
-                    "OPENAI_API_KEY environment variable is not set. "
-                    "Add it to your Render environment variables."
-                )
 
         # Extract user aggregator params from config, with defaults
         user_aggregator_params = LLMUserAggregatorParams(
@@ -260,11 +247,6 @@ def create_stt_service(
                 )
         else:
             api_key = os.getenv("DEEPGRAM_API_KEY")
-            if not api_key:
-                raise ServiceCreationError(
-                    "DEEPGRAM_API_KEY environment variable is not set. "
-                    "Add it to your Render environment variables."
-                )
         return DeepgramSTTService(
             api_key=api_key,
             sample_rate=sample_rate,
@@ -476,11 +458,6 @@ def create_tts_service(
                 )
         else:
             api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key:
-                raise ServiceCreationError(
-                    "OPENAI_API_KEY environment variable is not set. "
-                    "Add it to your Render environment variables."
-                )
         return OpenAITTSService(
             api_key=api_key,
             voice=voice

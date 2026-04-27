@@ -4,10 +4,9 @@ import os
 import socket
 import json
 import traceback
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 
 from loguru import logger
 from dotenv import load_dotenv
@@ -22,7 +21,6 @@ from .backend_utils import (
     create_meeting_in_backend,
     update_meeting_end_time,
     fetch_agent_config_from_backend,
-    fetch_integration_key,
 )
 
 
@@ -63,11 +61,6 @@ def create_nodelay_websocket_protocol():
         return None
 
 
-# === In-memory session store for browser web calls ===
-# Maps session_id → agent config dict; cleared when session connects.
-_web_sessions: Dict[str, Dict[str, Any]] = {}
-
-
 # === Pydantic Models ===
 
 class OutboundCallRequest(BaseModel):
@@ -76,21 +69,6 @@ class OutboundCallRequest(BaseModel):
     agent_id: str
     custom_field: Optional[str] = None
     caller_id: Optional[str] = None
-
-
-class WebCallRequest(BaseModel):
-    """Request model for browser-based web voice sessions.
-    
-    Compatible with the leadership-coach app's /api/voicera/call → /call/web flow.
-    """
-    systemPrompt: Optional[str] = None
-    greeting: Optional[str] = None
-    callId: Optional[str] = None
-    webhookUrl: Optional[str] = None
-    llm: Optional[Dict[str, Any]] = None
-    stt: Optional[Dict[str, Any]] = None
-    tts: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
 
 
 # === Helper Functions ===
@@ -204,133 +182,6 @@ async def root():
 async def health():
     """Detailed health check."""
     return {"status": "healthy"}
-
-
-@app.post("/call/web")
-async def create_web_call_session(request: WebCallRequest, req: Request):
-    """Create a browser-based voice session.
-
-    Accepts agent config inline (system prompt, LLM/STT/TTS config) and returns a
-    session ID plus WebSocket URL for the browser to connect to.
-
-    This endpoint is called by the leadership-coach app's /api/voicera/call Next.js route.
-    """
-    api_key = os.environ.get("INTERNAL_API_KEY")
-    if api_key:
-        auth_header = req.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer ") or auth_header[7:] != api_key:
-            raise HTTPException(status_code=401, detail="Unauthorized")
-
-    session_id = request.callId or str(uuid.uuid4())
-
-    # Build an inline agent config from the request payload
-    llm_config = request.llm or {}
-    stt_config = request.stt or {}
-    tts_config = request.tts or {}
-
-    agent_config = {
-        "agent_type": "web_session",
-        "system_prompt": request.systemPrompt or "You are a helpful voice assistant.",
-        "greeting_message": request.greeting or "",
-        "session_timeout_minutes": 15,
-        "llm_model": {
-            "name": llm_config.get("provider", os.environ.get("VOICERA_LLM_PROVIDER", "openai")),
-            "args": {
-                "model": llm_config.get("model", os.environ.get("VOICERA_LLM_MODEL", "gpt-4o-mini")),
-            },
-        },
-        "stt_model": {
-            "name": stt_config.get("provider", "deepgram"),
-            "language": stt_config.get("language", "English"),
-            "args": stt_config.get("args", {"model": "nova-2"}),
-        },
-        "tts_model": {
-            "name": tts_config.get("provider", os.environ.get("VOICERA_TTS_PROVIDER", "openai")),
-            "language": "English",
-            "args": tts_config.get("args", {
-                "voice": os.environ.get("VOICERA_TTS_VOICE", "nova"),
-            }),
-        },
-        "metadata": request.metadata or {},
-        "webhook_url": request.webhookUrl,
-    }
-
-    _web_sessions[session_id] = agent_config
-    logger.info(f"✅ Web session created: {session_id}")
-
-    ws_base = os.environ.get("JOHNAIC_WEBSOCKET_URL", "")
-    if not ws_base:
-        server_url = os.environ.get("JOHNAIC_SERVER_URL", "")
-        if server_url:
-            ws_base = server_url.replace("https://", "wss://").replace("http://", "ws://")
-    ws_base = ws_base.rstrip("/")
-
-    ws_url = f"{ws_base}/browser/session/{session_id}"
-
-    return JSONResponse({
-        "sessionId": session_id,
-        "session_id": session_id,
-        "wsUrl": ws_url,
-        "ws_url": ws_url,
-    })
-
-
-@app.websocket("/browser/session/{session_id}")
-async def browser_session_websocket(websocket: WebSocket, session_id: str):
-    """WebSocket endpoint for browser-based voice sessions created via /call/web.
-
-    Uses inline agent config (no registered agent_id required).
-    Sends back transcript events so the browser UI can show live transcripts.
-    """
-    await websocket.accept()
-    logger.info(f"🔌 Browser session WebSocket connected: session={session_id}")
-
-    agent_config = _web_sessions.pop(session_id, None)
-    if not agent_config:
-        logger.error(f"❌ No session config for session_id={session_id}")
-        await websocket.close(code=1008, reason="Session not found or expired")
-        return
-
-    call_sid = None
-    stream_sid = None
-
-    try:
-        first_message = await websocket.receive_text()
-        data = json.loads(first_message)
-        if data.get("event") != "start":
-            logger.warning(f"⚠️ Expected 'start' event, got: {data.get('event')}")
-            return
-
-        start_info = data.get("start", {})
-        call_sid = start_info.get("callSid") or start_info.get("callId", session_id)
-        stream_sid = start_info.get("streamSid") or start_info.get("streamId", session_id)
-
-        logger.info(f"📞 Browser session call: call_sid={call_sid}")
-
-        async def send_transcript(role: str, content: str, timestamp: Optional[str]):
-            await websocket.send_text(json.dumps({
-                "event": "transcript",
-                "role": role,
-                "content": content,
-                "timestamp": timestamp,
-            }))
-
-        await bot(
-            websocket,
-            stream_sid,
-            call_sid,
-            agent_config.get("agent_type", "web_session"),
-            agent_config,
-            transcript_callback=send_transcript,
-            force_sample_rate=16000,  # Browser always sends 16kHz L16 PCM
-        )
-
-    except Exception as e:
-        logger.error(f"❌ Browser session WebSocket error: {e}")
-        logger.error(traceback.format_exc())
-    finally:
-        _web_sessions.pop(session_id, None)
-        logger.info(f"🔌 Browser session WebSocket closed: call_sid={call_sid}")
 
 
 @app.post("/outbound/call/")
@@ -477,66 +328,6 @@ async def websocket_endpoint(websocket: WebSocket, agent_id: str):
         logger.debug(traceback.format_exc())
     finally:
         logger.info(f"🔌 WebSocket closed: call_sid={call_sid}")
-
-@app.websocket("/browser/agent/{agent_id}")
-async def browser_websocket_endpoint(websocket: WebSocket, agent_id: str):
-    """WebSocket endpoint for browser-based voice sessions with live transcript events.
-
-    Accepts the same PCM-over-WebSocket protocol as the telephony endpoint.
-    Sends back `transcript` events so the browser UI can display live transcripts.
-    """
-    await websocket.accept()
-    logger.info(f"🔌 Browser WebSocket connected: agent={agent_id}")
-
-    call_sid = None
-    stream_sid = None
-
-    try:
-        agent_config = await fetch_agent_config_from_backend(agent_id)
-        agent_type = agent_config.get("agent_type")
-
-        if not agent_config:
-            logger.error(f"❌ Failed to fetch agent config from backend: {agent_id}")
-            return
-
-        first_message = await websocket.receive_text()
-        data = json.loads(first_message)
-        if data.get("event") != "start":
-            logger.warning(f"⚠️ Expected 'start' event, got: {data.get('event')}")
-            return
-
-        start_info = data.get("start", {})
-        call_sid = start_info.get("callSid") or start_info.get("callId", "unknown")
-        stream_sid = start_info.get("streamSid") or start_info.get("streamId", "unknown")
-
-        logger.info(f"📞 Browser call started: call_sid={call_sid}, stream_sid={stream_sid}")
-
-        async def send_transcript(role: str, content: str, timestamp: Optional[str]):
-            await websocket.send_text(json.dumps({
-                "event": "transcript",
-                "role": role,
-                "content": content,
-                "timestamp": timestamp,
-            }))
-
-        await bot(
-            websocket,
-            stream_sid,
-            call_sid,
-            agent_type,
-            agent_config,
-            transcript_callback=send_transcript,
-        )
-
-    except FileNotFoundError as e:
-        logger.error(f"❌ {e}")
-        await websocket.close(code=1008, reason="Agent config not found")
-    except Exception as e:
-        logger.error(f"❌ Browser WebSocket error: {e}")
-        logger.debug(traceback.format_exc())
-    finally:
-        logger.info(f"🔌 Browser WebSocket closed: call_sid={call_sid}")
-
 
 # Ubona: hardcoded to Mahavistaar agent; answer URL is https://vobiz.johnaic.com/ubona
 UBONA_AGENT_TYPE = "Mahavistaar"
