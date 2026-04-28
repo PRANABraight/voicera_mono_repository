@@ -1,6 +1,6 @@
-site_name: VoiceERA Documentation
+site_name: VoicEra Documentation
 site_description: A complete voice AI platform with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.
-site_author: VoiceERA Team
+site_author: VoicEra Team
 site_url: https://voicera-docs.example.com
 
 theme:
@@ -59,8 +59,13 @@ nav:
     - Backend API: services/backend.md
     - Voice Server: services/voice-server.md
     - Frontend: services/frontend.md
-    - AI4Bharat STT: services/ai4bharat-stt.md
-    - AI4Bharat TTS: services/ai4bharat-tts.md
+    - LLM Providers: services/llm-providers.md
+    - STT Providers: services/ai4bharat-stt.md
+    - TTS Providers: services/ai4bharat-tts.md
+    - Integrations: services/integrations.md
+    - Knowledge Base: services/knowledge-base.md
+    - Analytics & Call Logs: services/analytics.md
+    - GPU Telemetry: services/telemetry.md
   - API Documentation:
     - REST API: api/rest-api.md
     - WebSocket API: api/websocket-api.md

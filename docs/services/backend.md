@@ -1,10 +1,10 @@
 # Backend API Service
 
-Comprehensive documentation for the VoiceERA Backend API service.
+Comprehensive documentation for the VoicEra Backend API service.
 
 ## Overview
 
-The Backend API is the central orchestrator for the VoiceERA platform, built with **FastAPI** and **Python 3.10+**.
+The Backend API is the central orchestrator for the VoicEra platform, built with **FastAPI** and **Python 3.10+**.
 
 **Key Responsibilities:**
 - User authentication & authorization
@@ -72,46 +72,45 @@ voicera_backend/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py                    # Application entry point
-│   ├── auth.py                    # Authentication utilities
-│   ├── config.py                  # Configuration
-│   ├── database.py                # Database connection
+│   ├── auth.py                    # JWT authentication & API key verification
+│   ├── config.py                  # Settings and configuration
+│   ├── database.py                # MongoDB connection
 │   ├── models/
-│   │   ├── __init__.py
-│   │   ├── schemas.py             # Pydantic models
-│   │   └── database_models.py     # MongoDB models
+│   │   └── __init__.py            # Pydantic schemas
 │   ├── routers/
 │   │   ├── __init__.py
-│   │   ├── users.py               # User endpoints
-│   │   ├── agents.py              # Agent endpoints
-│   │   ├── campaigns.py           # Campaign endpoints
-│   │   ├── call_logs.py           # Call log endpoints
-│   │   ├── call_recordings.py     # Recording endpoints
-│   │   ├── analytics.py           # Analytics endpoints
-│   │   ├── integrations.py        # Third-party integrations
-│   │   └── health.py              # Health check
+│   │   ├── users.py               # User signup, login, password reset
+│   │   ├── agents.py              # Agent CRUD and configuration
+│   │   ├── campaigns.py           # Campaign management
+│   │   ├── meetings.py            # Call log (meetings) endpoints
+│   │   ├── call_recordings.py     # Recording upload webhook
+│   │   ├── analytics.py           # Analytics aggregation
+│   │   ├── integrations.py        # Provider API key management
+│   │   ├── audience.py            # Audience management
+│   │   ├── phone_numbers.py       # Phone number management
+│   │   ├── members.py             # Organisation member management
+│   │   ├── knowledge.py           # Knowledge base document management
+│   │   ├── rag.py                 # RAG retrieval endpoint
+│   │   └── vobiz.py               # Vobiz telephony integration
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── agent_service.py       # Agent business logic
 │   │   ├── campaign_service.py    # Campaign business logic
-│   │   ├── call_recording_service.py
+│   │   ├── call_recording_service.py  # Recording storage
 │   │   ├── analytics_service.py   # Analytics queries
-│   │   ├── auth_service.py        # JWT & permissions
-│   │   └── storage_service.py     # MinIO integration
+│   │   ├── meeting_service.py     # Call log management
+│   │   ├── audience_service.py    # Audience management
+│   │   ├── member_service.py      # Member management
+│   │   ├── phone_number.py        # Phone number service
+│   │   ├── user_service.py        # User management
+│   │   ├── email_service.py       # Email notifications (Mailtrap)
+│   │   └── vobiz.py               # Vobiz API integration
 │   ├── storage/
-│   │   └── minio_client.py        # MinIO wrapper
-│   ├── utils/
-│   │   ├── security.py            # Encryption, hashing
-│   │   ├── validators.py          # Data validation
-│   │   └── constants.py           # Constant values
-│   └── scripts/
-│       └── seed_data.py           # Sample data for development
-├── tests/
-│   ├── test_auth.py
-│   ├── test_agents.py
-│   ├── test_campaigns.py
-│   └── conftest.py                # Test fixtures
+│   │   └── minio_client.py        # MinIO wrapper for recordings
+│   └── utils/
+│       └── mongo_utils.py         # MongoDB utility helpers
 ├── requirements.txt
-├── env.example
+├── .env.example
 ├── docker-compose.yml
 └── Dockerfile
 ```
@@ -188,28 +187,27 @@ voicera_backend/
 }
 ```
 
-### CallLog Model
+### CallLog (Meeting) Model
 
 ```python
 {
   "_id": ObjectId,
-  "id": UUID,
-  "campaign_id": UUID,
-  "agent_id": UUID,
-  "phone_number": str,
-  "caller_id": str,
-  "status": "initiated" | "ringing" | "connected" | "completed" | "failed",
-  "duration_seconds": int,
-  "transcript": str,
-  "summary": str,
-  "sentiment": "positive" | "neutral" | "negative",
-  "emotions": [str],
-  "key_phrases": [str],
-  "recording_path": str,       # Path in MinIO
-  "error_message": str,        # If failed
-  "cost": float,               # API call costs
-  "created_at": datetime,
-  "updated_at": datetime
+  "meeting_id": str,           # Unique call identifier from telephony provider
+  "org_id": str,               # Organisation that owns the call
+  "agent_type": str,           # Agent name / type used for this call
+  "phone_number": str,         # Caller's phone number
+  "call_type": str,            # "inbound" or "outbound"
+  "status": str,               # Call status from telephony provider
+  "call_busy": bool,           # Whether the call was answered
+  "duration": int,             # Call duration in seconds
+  "price": str,                # Telephony cost
+  "start_time_utc": str,       # ISO 8601 call start timestamp
+  "end_time_utc": str,         # ISO 8601 call end timestamp
+  "created_at": str,           # ISO 8601 record creation timestamp
+  "recording_url": str,        # minio://recordings/<call_sid>.wav
+  "transcript_url": str,       # minio://transcripts/<call_sid>.txt
+  "transcript_content": str,   # Full transcript text
+  "call_duration": int,        # Duration from recording
 }
 ```
 
@@ -217,74 +215,85 @@ voicera_backend/
 
 ## Core Endpoints
 
-### Authentication
+All routes are prefixed with `/api/v1`. See [API Endpoints Reference](../api/endpoints.md) for the complete list.
+
+### Users & Authentication
 
 ```
-POST   /auth/register          # User registration
-POST   /auth/login             # User login
-POST   /auth/refresh-token     # Refresh JWT
-GET    /auth/me                # Get current user
-POST   /auth/logout            # Logout
-POST   /auth/forgot-password   # Password reset
-POST   /auth/reset-password    # Confirm password reset
+POST   /api/v1/users/signup             # User registration
+POST   /api/v1/users/login              # User login, returns JWT
+GET    /api/v1/users/me                 # Get current user profile
+GET    /api/v1/users/{email}            # Look up user by email
+POST   /api/v1/users/forgot-password    # Request password reset email
+POST   /api/v1/users/reset-password     # Reset password using token
 ```
 
-### Agents
+### Agents (Assistants)
 
 ```
-GET    /agents                 # List agents
-POST   /agents                 # Create agent
-GET    /agents/{agent_id}      # Get agent details
-PUT    /agents/{agent_id}      # Update agent
-DELETE /agents/{agent_id}      # Delete agent
-GET    /agents/{agent_id}/config  # Get agent config
+POST   /api/v1/agents                          # Create agent
+GET    /api/v1/agents/org/{org_id}             # List agents for an org
+GET    /api/v1/agents/{agent_type}             # Get agent by type/name
+PUT    /api/v1/agents/{agent_type}             # Update agent configuration
+DELETE /api/v1/agents/{agent_type}             # Delete agent
+GET    /api/v1/agents/config/{agent_type}      # Get agent config (voice server)
+GET    /api/v1/agents/by-phone/{phone_number}  # Get agent config by phone number
 ```
 
 ### Campaigns
 
 ```
-GET    /campaigns              # List campaigns
-POST   /campaigns              # Create campaign
-GET    /campaigns/{campaign_id}    # Get campaign details
-PUT    /campaigns/{campaign_id}    # Update campaign
-DELETE /campaigns/{campaign_id}    # Delete campaign
-POST   /campaigns/{campaign_id}/launch  # Start campaign
-POST   /campaigns/{campaign_id}/pause   # Pause campaign
+POST   /api/v1/campaigns                       # Create campaign
+GET    /api/v1/campaigns/org/{org_id}          # List campaigns for an org
+GET    /api/v1/campaigns/{campaign_name}       # Get campaign by name
 ```
 
-### Call Logs
+### Meetings (Call Logs)
 
 ```
-GET    /call-logs              # List call logs
-GET    /call-logs/{call_id}    # Get call details
-GET    /call-logs/campaign/{campaign_id}  # Campaign call logs
-DELETE /call-logs/{call_id}    # Delete call log
+POST   /api/v1/meetings                        # Create call log (voice server)
+PATCH  /api/v1/meetings/{meeting_id}           # Update call end time
+GET    /api/v1/meetings                        # List meetings for current org
+GET    /api/v1/meetings/{meeting_id}           # Get single meeting details
+GET    /api/v1/meetings/{meeting_id}/recording # Stream call recording audio
 ```
 
 ### Call Recordings
 
 ```
-GET    /call-recordings/{call_id}  # Get recording metadata
-GET    /call-recordings/{call_id}/download  # Download recording
-GET    /call-recordings/{call_id}/transcript  # Get transcript
+POST   /api/v1/call-recordings                 # Save recording metadata (voice server)
 ```
 
 ### Analytics
 
 ```
-GET    /analytics/calls         # Call statistics
-GET    /analytics/sentiment     # Sentiment analysis
-GET    /analytics/top-phrases   # Most common phrases
-GET    /analytics/agent-performance  # Agent metrics
-GET    /analytics/campaign-stats    # Campaign statistics
+GET    /api/v1/analytics                       # Call analytics for the org
+```
+
+### Integrations
+
+```
+POST   /api/v1/integrations                    # Add provider API key
+GET    /api/v1/integrations                    # List integrations
+DELETE /api/v1/integrations/{model}            # Delete integration
+POST   /api/v1/integrations/bot/get-api-key   # Retrieve key (voice server)
+```
+
+### Knowledge Base & RAG
+
+```
+GET    /api/v1/knowledge                       # List knowledge documents
+POST   /api/v1/knowledge/upload                # Upload PDF document
+DELETE /api/v1/knowledge/{document_id}         # Delete knowledge document
+POST   /api/v1/rag/retrieve                    # Retrieve chunks (voice server)
 ```
 
 ### Health
 
 ```
-GET    /health                 # Service health check
-GET    /readiness              # Readiness probe
-GET    /liveness               # Liveness probe
+GET    /health                 # MongoDB connectivity check
+GET    /docs                   # Swagger UI
+GET    /redoc                  # ReDoc UI
 ```
 
 ---
@@ -328,22 +337,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/agents \
+curl -X POST http://localhost:8000/api/v1/agents \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Sales Agent",
-    "description": "Handles sales inquiries",
-    "llm_provider": "openai",
-    "llm_model": "gpt-4",
-    "stt_provider": "deepgram",
-    "tts_provider": "cartesia",
-    "system_prompt": "You are a helpful sales agent...",
-    "language": "en",
-    "voice_parameters": {
-      "voice_id": "english_male",
-      "speed": 1.0,
-      "tone": "professional"
+    "agent_type": "sales-agent-v1",
+    "org_id": "org-uuid",
+    "agent_config": {
+      "system_prompt": "You are a helpful sales agent...",
+      "greeting_message": "Hello, how can I help you today?",
+      "llm_model": { "name": "OpenAI", "model": "gpt-4o" },
+      "stt_model": { "name": "deepgram", "language": "English" },
+      "tts_model": { "name": "cartesia", "language": "English" }
     }
   }'
 ```
@@ -359,27 +364,28 @@ curl -X POST http://localhost:8000/agents \
 }
 ```
 
-### Get Call Log with Transcript
+### Get Meeting (Call Log) with Transcript
 
 **Request:**
 ```bash
-curl http://localhost:8000/call-logs/call-uuid \
+curl http://localhost:8000/api/v1/meetings/CA1234567890 \
   -H "Authorization: Bearer <token>"
 ```
 
 **Response:**
 ```json
 {
-  "id": "call-uuid",
-  "campaign_id": "campaign-uuid",
-  "phone_number": "+1234567890",
+  "meeting_id": "CA1234567890",
+  "org_id": "org-uuid",
+  "agent_type": "sales-agent-v1",
+  "phone_number": "+919876543210",
+  "call_type": "outbound",
   "status": "completed",
-  "duration_seconds": 120,
-  "transcript": "User: Hello... Agent: Hi there...",
-  "sentiment": "positive",
-  "emotions": ["satisfied", "engaged"],
-  "recording_path": "s3://voicera-recordings/call-uuid.wav",
-  "created_at": "2024-01-29T10:30:00Z"
+  "duration": 185,
+  "start_time_utc": "2026-04-01T10:00:00Z",
+  "end_time_utc": "2026-04-01T10:03:05Z",
+  "transcript_content": "Agent: Hello, how can I help you?...",
+  "recording_url": "minio://recordings/CA1234567890.wav"
 }
 ```
 
@@ -387,33 +393,40 @@ curl http://localhost:8000/call-logs/call-uuid \
 
 ## Environment Configuration
 
+See [Environment Variables Reference](../deployment/environment.md) for the full list. Key variables:
+
 ```env
-# Database
-MONGODB_HOST=localhost
+# MongoDB
+MONGODB_HOST=mongodb
 MONGODB_PORT=27017
 MONGODB_USER=admin
 MONGODB_PASSWORD=admin123
 MONGODB_DATABASE=voicera
 
-# Storage
-MINIO_HOST=localhost
-MINIO_PORT=9000
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
+# MinIO (call recordings storage)
+MINIO_ENDPOINT=minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
 
 # Security
-JWT_SECRET_KEY=your-secret-key
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION_HOURS=24
+SECRET_KEY=your-long-random-secret        # JWT signing key
+INTERNAL_API_KEY=your-internal-api-key    # Voice server → backend auth
 
-# CORS
-CORS_ORIGINS=["http://localhost:3000","https://yourdomain.com"]
+# Email (Mailtrap)
+MAILTRAP_API_TOKEN=
+MAILTRAP_FROM_EMAIL=noreply@voicera.com
+FRONTEND_URL=http://localhost:3000
 
-# API
-API_TITLE=VoiceERA API
-API_VERSION=1.0.0
-LOG_LEVEL=INFO
-DEBUG=False
+# Vobiz telephony
+VOBIZ_API_BASE_URL=https://api.vobiz.ai/api/v1
+VOBIZ_AUTH_ID=
+VOBIZ_AUTH_TOKEN=
+
+# RAG / Knowledge Base
+CHROMA_BASE_DIR=/app/rag_system/chroma_data
+
+# Application
+DEBUG=false
 ```
 
 ---

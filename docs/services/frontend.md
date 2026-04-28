@@ -1,64 +1,64 @@
 # Frontend Service
 
-Comprehensive documentation for the VoiceERA Frontend service.
+Documentation for the VoicEra Frontend — the web dashboard for managing agents, campaigns, and call analytics.
 
 ## Overview
 
-The Frontend is the user-facing web interface for VoiceERA, built with **Next.js 16+**, **React 18+**, and **TailwindCSS 4+**.
+The Frontend is the user-facing web interface for VoicEra, built with **Next.js 16.x** (App Router), **React 18+**, and **TailwindCSS 4+**. It uses the **ShadCN UI** component library and communicates with the backend exclusively through Next.js API route proxies.
 
-**Key Responsibilities:**
-- User authentication & account management
-- Agent creation and management
-- Campaign management and monitoring
-- Real-time voice call interface
-- Call history and recordings
-- Analytics dashboard
+**Key pages:**
+
+- **Assistants** — Create, configure, and manage voice agents; initiate test calls
+- **Campaigns** — Set up and monitor outbound call campaigns
+- **Audiences** — Manage contact lists for campaigns
+- **Numbers** — Provision and manage Vobiz phone numbers linked to agents
+- **Knowledge Base** — Upload PDF documents for RAG-powered agent responses
+- **History** — Browse past call logs; play recordings and read transcripts
+- **Analytics** — View aggregated call metrics with date-range and agent filters
+- **Members** — Manage organisation members
+- **Integrations** — Store provider API keys (OpenAI, Deepgram, Cartesia, etc.) per organisation
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
-- Modern web browser (Chrome, Firefox, Safari, Edge)
+- npm
 
 ### Installation
 
 ```bash
 cd voicera_frontend
 
-# Install dependencies
 npm install
-# or
-yarn install
+```
 
-# Configure environment
+### Configuration
+
+```bash
 cp .env.example .env.local
-# Edit with your settings
+# Edit .env.local with your settings
 ```
 
-### Development
+### Running Locally
 
 ```bash
-# Run dev server (with hot reload)
+# Development server with hot reload
 npm run dev
+# Open http://localhost:3000
 
-# Open in browser
-# http://localhost:3000
+# Production build
+npm run build
+npm run start
 ```
 
-### Production Build
+### Docker
 
 ```bash
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Or via Docker
 docker build -t voicera-frontend .
-docker run -p 3000:3000 voicera-frontend
+docker run -p 3000:3000 --env-file .env.local voicera-frontend
 ```
 
 ---
@@ -68,465 +68,223 @@ docker run -p 3000:3000 voicera-frontend
 ```
 voicera_frontend/
 ├── app/
-│   ├── layout.tsx             # Root layout
-│   ├── page.tsx               # Home page
-│   ├── (auth)/                # Auth routes
-│   │   ├── login/
-│   │   │   └── page.tsx
-│   │   ├── signup/
-│   │   │   └── page.tsx
-│   │   └── forgot-password/
-│   │       └── page.tsx
-│   ├── (dashboard)/           # Protected routes
+│   ├── layout.tsx                         # Root layout
+│   ├── page.tsx                           # Landing / redirect
+│   ├── (auth)/                            # Unauthenticated routes
 │   │   ├── layout.tsx
-│   │   ├── page.tsx           # Dashboard home
-│   │   ├── agents/
-│   │   │   ├── page.tsx       # Agents list
-│   │   │   ├── [id]/
-│   │   │   │   └── page.tsx   # Agent details
-│   │   │   └── new/
-│   │   │       └── page.tsx   # Create agent
-│   │   ├── campaigns/
-│   │   │   ├── page.tsx
-│   │   │   ├── [id]/
-│   │   │   │   └── page.tsx
-│   │   │   └── new/
-│   │   │       └── page.tsx
-│   │   ├── call-logs/
-│   │   │   ├── page.tsx
-│   │   │   └── [id]/
-│   │   │       └── page.tsx
-│   │   ├── analytics/
-│   │   │   └── page.tsx
-│   │   ├── settings/
-│   │   │   └── page.tsx
-│   │   └── profile/
-│   │       └── page.tsx
-│   └── api/                   # API routes (if needed)
-│       ├── auth/
-│       └── proxy/
+│   │   ├── loading.tsx
+│   │   ├── signup/page.tsx
+│   │   ├── forgot-password/page.tsx
+│   │   ├── reset-password/page.tsx
+│   │   └── add-member/[slug]/page.tsx     # Member invite acceptance
+│   ├── (dashboard)/                       # Authenticated routes
+│   │   ├── layout.tsx
+│   │   ├── loading.tsx
+│   │   ├── assistants/
+│   │   │   ├── page.tsx                   # Agent list + create
+│   │   │   └── [id]/page.tsx              # Agent detail / edit
+│   │   ├── campaigns/page.tsx
+│   │   ├── audiences/page.tsx
+│   │   ├── numbers/page.tsx
+│   │   ├── knowledge-base/page.tsx
+│   │   ├── history/page.tsx               # Call log list
+│   │   ├── meetings/[meeting_id]/page.tsx # Call detail view
+│   │   ├── analytics/page.tsx
+│   │   ├── members/page.tsx
+│   │   └── integrations/page.tsx
+│   └── api/                               # Next.js API routes (backend proxy)
+│       ├── login/route.ts
+│       ├── agents/
+│       │   ├── route.ts
+│       │   └── [id]/route.ts
+│       ├── analytics/route.ts
+│       ├── audiences/
+│       │   ├── route.ts
+│       │   └── [audience_name]/route.ts
+│       ├── campaigns/
+│       │   ├── route.ts
+│       │   └── [campaign_name]/route.ts
+│       ├── get-campaigns/route.ts
+│       ├── integrations/
+│       │   ├── route.ts
+│       │   └── [model]/route.ts
+│       ├── knowledge-base/
+│       │   ├── route.ts
+│       │   └── [documentId]/route.ts
+│       ├── meetings/
+│       │   ├── route.ts
+│       │   ├── [meeting_id]/route.ts
+│       │   └── [meeting_id]/recording/route.ts
+│       ├── outbound-call/route.ts
+│       ├── phone-numbers/
+│       │   ├── route.ts
+│       │   ├── attach/route.ts
+│       │   └── detach/route.ts
+│       ├── users/route.ts
+│       ├── vobiz/
+│       │   ├── application/route.ts
+│       │   ├── application/[application_id]/route.ts
+│       │   ├── numbers/route.ts
+│       │   ├── numbers/link/route.ts
+│       │   └── numbers/unlink/route.ts
+│       └── v1/
+│           ├── members/
+│           │   ├── [orgId]/route.ts
+│           │   ├── add-member/route.ts
+│           │   └── delete-member/route.ts
+│           └── users/
+│               ├── me/route.ts
+│               └── [email]/route.ts
 ├── components/
-│   ├── app-sidebar.tsx        # Navigation sidebar
-│   ├── assistants/            # Agent components
-│   │   ├── agent-form.tsx
+│   ├── app-sidebar.tsx                    # Main navigation sidebar
+│   ├── navigation-progress.tsx            # Page transition progress bar
+│   ├── assistants/
 │   │   ├── agent-card.tsx
-│   │   └── agent-list.tsx
-│   ├── campaigns/             # Campaign components
-│   │   ├── campaign-form.tsx
-│   │   ├── campaign-card.tsx
-│   │   └── campaign-list.tsx
-│   ├── voice/                 # Voice call components
-│   │   ├── voice-interface.tsx
-│   │   ├── audio-player.tsx
-│   │   └── call-status.tsx
-│   ├── analytics/             # Analytics components
-│   │   ├── metrics-card.tsx
-│   │   ├── chart-widget.tsx
-│   │   └── analytics-dashboard.tsx
-│   ├── ui/                    # Reusable UI components
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── modal.tsx
-│   │   ├── dropdown.tsx
-│   │   ├── input.tsx
-│   │   └── ...
-│   ├── header.tsx
-│   ├── footer.tsx
-│   └── layouts/
-│       ├── authenticated-layout.tsx
-│       └── public-layout.tsx
+│   │   ├── create-new-agent-card.tsx
+│   │   └── test-call-sheet.tsx            # Slide-out panel for test calls
+│   ├── history/
+│   │   └── meeting-detail-sheet.tsx       # Slide-out for call detail / recording
+│   ├── members/
+│   │   └── member-card.tsx
+│   └── ui/                                # ShadCN UI components
+│       ├── button.tsx
+│       ├── card.tsx
+│       ├── dialog.tsx
+│       ├── sheet.tsx
+│       ├── sidebar.tsx
+│       ├── table.tsx
+│       ├── select.tsx
+│       ├── input.tsx
+│       ├── textarea.tsx
+│       ├── calendar.tsx
+│       ├── calendar_popover.tsx
+│       └── ...
 ├── hooks/
-│   ├── use-auth.ts            # Auth hook
-│   ├── use-voice.ts           # Voice call hook
-│   ├── use-api.ts             # API interaction
-│   ├── use-mobile.ts          # Mobile detection
-│   └── use-analytics.ts
+│   └── use-mobile.ts
 ├── lib/
-│   ├── api.ts                 # API client
-│   ├── api-config.ts          # API configuration
-│   ├── auth.ts                # Auth utilities
-│   ├── websocket.ts           # WebSocket client
-│   ├── utils.ts               # Utility functions
-│   └── constants.ts           # Constants
-├── styles/
-│   └── globals.css
-├── public/                    # Static assets
-│   └── images/
+│   ├── api-config.ts                      # SERVER_API_URL export
+│   ├── api.ts                             # API client helpers
+│   └── utils.ts
+├── public/                                # Static assets
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
-├── tailwind.config.js
-├── postcss.config.js
 └── .env.example
 ```
 
 ---
 
-## Key Features
+## Architecture: API Proxy Pattern
 
-### Authentication
+The frontend does **not** call the backend directly from the browser. Instead, all data fetching goes through **Next.js API routes** (`app/api/`) which act as a server-side proxy. This pattern:
 
-```typescript
-// Custom hook for auth state
-function useAuth() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    if (token) {
-      verifyToken(token).then(setUser);
-    }
-    setLoading(false);
-  }, []);
-  
-  const login = async (email, password) => {
-    const response = await api.post('/auth/login', {
-      email,
-      password
-    });
-    localStorage.setItem('token', response.token);
-    setUser(response.user);
-  };
-  
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-  };
-  
-  return { user, loading, login, logout };
-}
+- Keeps the backend URL and JWT tokens server-side
+- Allows the frontend to work behind a reverse proxy without exposing backend ports
+- Provides a clean boundary for adding auth checks, request transformation, or caching
+
+```
+Browser (React)
+      │  fetch /api/analytics
+      ▼
+Next.js API route  (app/api/analytics/route.ts)
+      │  fetch http://backend:8000/api/v1/analytics
+      │  (forwards Authorization header)
+      ▼
+VoicEra Backend
 ```
 
-### Voice Call Interface
+The backend URL is configured via `NEXT_PUBLIC_API_URL` (see Environment Variables below). The `lib/api-config.ts` module exports:
 
 ```typescript
-// Component for real-time voice calls
-function VoiceInterface({ campaignId, agentId }) {
-  const [callActive, setCallActive] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const mediaRecorder = useRef(null);
-  const ws = useRef(null);
-  
-  const startCall = async () => {
-    // Establish WebSocket connection
-    ws.current = new WebSocket(
-      process.env.NEXT_PUBLIC_VOICE_SERVER_URL
-    );
-    
-    ws.current.onopen = async () => {
-      // Send auth token
-      ws.current.send(JSON.stringify({
-        type: 'auth',
-        token: getToken(),
-        agent_id: agentId
-      }));
-    };
-    
-    ws.current.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      
-      if (message.type === 'ready') {
-        setCallActive(true);
-        startAudioCapture();
-      } else if (message.type === 'audio') {
-        playAudio(message.data);
-      }
-    };
-  };
-  
-  const startAudioCapture = async () => {
-    const stream = await navigator.mediaDevices
-      .getUserMedia({ audio: true });
-    mediaRecorder.current = new MediaRecorder(stream);
-    
-    mediaRecorder.current.ondataavailable = (event) => {
-      const audioData = event.data;
-      ws.current.send(JSON.stringify({
-        type: 'audio',
-        data: audioData
-      }));
-    };
-    
-    mediaRecorder.current.start(100); // Send chunks every 100ms
-    setIsListening(true);
-  };
-  
-  const endCall = () => {
-    mediaRecorder.current.stop();
-    ws.current.send(JSON.stringify({
-      type: 'control',
-      action: 'end'
-    }));
-    ws.current.close();
-    setCallActive(false);
-    setIsListening(false);
-  };
-  
-  return (
-    <div className="voice-interface">
-      <div className="call-status">
-        {callActive ? 'Call in Progress' : 'Call Ended'}
-      </div>
-      
-      <div className="transcript">
-        <p>{transcript}</p>
-      </div>
-      
-      <div className="controls">
-        {!callActive ? (
-          <button onClick={startCall} className="btn-primary">
-            Start Call
-          </button>
-        ) : (
-          <button onClick={endCall} className="btn-danger">
-            End Call
-          </button>
-        )}
-      </div>
-      
-      <div className="audio-status">
-        {isListening && (
-          <span className="recording-indicator">
-            🎤 Recording...
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-```
-
-### Analytics Dashboard
-
-```typescript
-// Analytics component
-function AnalyticsDashboard() {
-  const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      const response = await api.get('/analytics/calls');
-      setMetrics(response.data);
-      setLoading(false);
-    };
-    
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
-  
-  if (loading) return <LoadingSpinner />;
-  
-  return (
-    <div className="analytics-grid">
-      <MetricCard
-        title="Total Calls"
-        value={metrics.total_calls}
-        icon="📞"
-      />
-      
-      <MetricCard
-        title="Average Duration"
-        value={`${Math.round(metrics.avg_duration)}s`}
-        icon="⏱️"
-      />
-      
-      <MetricCard
-        title="Sentiment Score"
-        value={`${metrics.sentiment_positive}%`}
-        icon="😊"
-      />
-      
-      <ChartWidget
-        title="Calls Over Time"
-        data={metrics.calls_by_hour}
-        type="line"
-      />
-      
-      <ChartWidget
-        title="Sentiment Distribution"
-        data={metrics.sentiment_distribution}
-        type="pie"
-      />
-    </div>
-  );
-}
+export const SERVER_API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 ```
 
 ---
 
-## API Integration
+## Dashboard Pages
 
-### API Client Configuration
+### Assistants (`/assistants`)
 
-```typescript
-// lib/api-config.ts
-export const API_BASE_URL = 
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+List of all voice agents for the organisation. Each card shows the agent name, LLM/STT/TTS configuration, and linked phone numbers. From here you can:
 
-export const API_TIMEOUT = 30000;
+- Create a new agent (opens a configuration form)
+- Edit an existing agent's config
+- View agent detail (`/assistants/[id]`)
+- Initiate a test call via the **Test Call** slide-out panel — this triggers a Vobiz outbound call to a number you specify
 
-export const API_ENDPOINTS = {
-  AUTH: {
-    LOGIN: '/auth/login',
-    SIGNUP: '/auth/signup',
-    REFRESH: '/auth/refresh-token',
-    ME: '/auth/me'
-  },
-  AGENTS: {
-    LIST: '/agents',
-    CREATE: '/agents',
-    DETAIL: (id: string) => `/agents/${id}`,
-    UPDATE: (id: string) => `/agents/${id}`,
-    DELETE: (id: string) => `/agents/${id}`
-  },
-  CAMPAIGNS: {
-    LIST: '/campaigns',
-    CREATE: '/campaigns',
-    DETAIL: (id: string) => `/campaigns/${id}`,
-    LAUNCH: (id: string) => `/campaigns/${id}/launch`
-  },
-  CALL_LOGS: {
-    LIST: '/call-logs',
-    DETAIL: (id: string) => `/call-logs/${id}`
-  },
-  ANALYTICS: {
-    CALLS: '/analytics/calls',
-    SENTIMENT: '/analytics/sentiment'
-  }
-};
-```
+The test call sheet uses `NEXT_PUBLIC_JOHNAIC_SERVER_URL` to build the Vobiz answer webhook URL when configuring the agent.
 
-### API Client
+### Campaigns (`/campaigns`)
 
-```typescript
-// lib/api.ts
-import axios from 'axios';
+Create and monitor outbound call campaigns. A campaign links an agent to an audience (contact list) and schedules bulk outbound calls.
 
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: API_TIMEOUT
-});
+### Audiences (`/audiences`)
 
-// Add token to headers
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+Manage contact lists used by campaigns. Each audience is a named list of phone numbers.
 
-// Handle errors
-apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401) {
-      // Redirect to login
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+### Numbers (`/numbers`)
 
-export const api = {
-  get: (url: string) => apiClient.get(url),
-  post: (url: string, data: any) => apiClient.post(url, data),
-  put: (url: string, data: any) => apiClient.put(url, data),
-  delete: (url: string) => apiClient.delete(url)
-};
-```
+Provision Vobiz phone numbers and link them to agents. Inbound calls to a linked number are automatically routed to the associated agent.
 
----
+### Knowledge Base (`/knowledge-base`)
 
-## Styling
+Upload PDF documents that an agent can reference during calls (RAG). Documents are processed asynchronously — their status (`processing` → `ready` / `failed`) is shown in the list. See [Knowledge Base](knowledge-base.md) for full details.
 
-### TailwindCSS Configuration
+### History (`/history`)
 
-```typescript
-// tailwind.config.js
-module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}'
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: '#3B82F6',
-        secondary: '#10B981',
-        danger: '#EF4444'
-      },
-      spacing: {
-        'container': '1200px'
-      }
-    }
-  },
-  plugins: []
-};
-```
+Browse the call log (all calls for the org). Clicking a call opens the **Meeting Detail** sheet showing:
 
-### Example Component Styling
+- Duration and status
+- Audio playback (WAV recording)
+- Full transcript text
 
-```typescript
-export function AgentCard({ agent }) {
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-      <h3 className="text-lg font-semibold text-gray-900">
-        {agent.name}
-      </h3>
-      
-      <p className="text-sm text-gray-600 mt-2">
-        {agent.description}
-      </p>
-      
-      <div className="flex gap-2 mt-4">
-        <button className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600">
-          Edit
-        </button>
-        <button className="px-4 py-2 bg-danger text-white rounded hover:bg-red-600">
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-}
-```
+### Analytics (`/analytics`)
+
+Aggregated call metrics for the organisation:
+
+- Total calls attempted and connected
+- Average call duration
+- Total connected minutes
+- Per-agent breakdown
+
+Supports filtering by date range and agent type. Data is fetched from `GET /api/v1/analytics` on the backend. See [Analytics & Call Logs](analytics.md) for the full API reference.
+
+### Members (`/members`)
+
+Invite and manage organisation members. Members share the same org context and can manage agents, campaigns, and call data.
+
+### Integrations (`/integrations`)
+
+Store provider API keys at the organisation level. Keys are used by the voice server at call time (fetched via `POST /api/v1/integrations/bot/get-api-key`). See [Integrations](integrations.md) for the full list of supported providers.
 
 ---
 
 ## Environment Variables
 
-```env
-# API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-NEXT_PUBLIC_API_TIMEOUT=30000
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | No | `http://localhost:8000` | Backend API base URL (used by Next.js API routes server-side) |
+| `NEXT_PUBLIC_JOHNAIC_SERVER_URL` | Yes | — | Public URL of the Voice Server (used to build Vobiz webhook URLs when configuring agents) |
 
-# Voice Server
-NEXT_PUBLIC_VOICE_SERVER_URL=http://localhost:7860
-NEXT_PUBLIC_WS_URL=ws://localhost:7860
+---
 
-# Authentication
-NEXT_PUBLIC_AUTH_ENABLED=true
-NEXT_PUBLIC_JWT_STORAGE_KEY=voicera_token
+## Technology Stack
 
-# Application
-NEXT_PUBLIC_APP_NAME=VoiceERA
-NEXT_PUBLIC_APP_VERSION=1.0.0
-NEXT_PUBLIC_LOG_LEVEL=info
-
-# Analytics
-NEXT_PUBLIC_ANALYTICS_ENABLED=false
-```
+| Library | Version | Purpose |
+|---------|---------|---------|
+| Next.js | 16.x | App Router, SSR, API routes |
+| React | 18+ | UI rendering |
+| TailwindCSS | 4+ | Utility-first styling |
+| ShadCN UI | — | Accessible component primitives |
+| TypeScript | 5+ | Type safety |
 
 ---
 
 ## Next Steps
 
-- **[Installation](../getting-started/installation.md)** - Set up development
-- **[Quick Start](../getting-started/quickstart.md)** - Get running
-- **[Backend API](backend.md)** - API documentation
+- **[Backend API](backend.md)** — REST API the frontend calls through its proxy
+- **[Knowledge Base](knowledge-base.md)** — RAG document management
+- **[Integrations](integrations.md)** — Provider API key management
+- **[Analytics & Call Logs](analytics.md)** — Call metrics and recordings
+- **[WebSocket API](../api/websocket-api.md)** — Voice streaming protocol

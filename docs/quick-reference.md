@@ -1,4 +1,4 @@
-# VoiceERA Quick Reference
+# VoicEra Quick Reference
 
 Quick reference for common tasks and commands.
 
@@ -111,11 +111,13 @@ db.agents.countDocuments()
 
 ## API Quick Reference
 
+All API routes use the `/api/v1` prefix. See [API Endpoints Reference](api/endpoints.md) for the complete list.
+
 ### Authentication
 
 ```bash
-# Get token
-curl -X POST http://localhost:8000/auth/login \
+# Login and get token
+curl -X POST http://localhost:8000/api/v1/users/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -124,98 +126,85 @@ curl -X POST http://localhost:8000/auth/login \
 
 # Use token in subsequent requests
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:8000/agents
+  http://localhost:8000/api/v1/agents/org/{org_id}
 ```
 
 ### Agents
 
 ```bash
-# List agents
+# List agents for an org
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/agents
+  http://localhost:8000/api/v1/agents/org/{org_id}
 
 # Create agent
-curl -X POST http://localhost:8000/agents \
+curl -X POST http://localhost:8000/api/v1/agents \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Support Bot",
-    "llm_provider": "openai",
-    "system_prompt": "You are a helpful support agent"
+    "agent_type": "support-bot",
+    "org_id": "org-uuid",
+    "agent_config": {
+      "system_prompt": "You are a helpful support agent."
+    }
   }'
 
-# Get agent details
+# Get agent
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/agents/{agent_id}
+  http://localhost:8000/api/v1/agents/{agent_type}
 
 # Update agent
-curl -X PUT http://localhost:8000/agents/{agent_id} \
+curl -X PUT http://localhost:8000/api/v1/agents/{agent_type} \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name": "New Name"}'
+  -d '{"agent_config": {"system_prompt": "Updated prompt"}}'
 
 # Delete agent
-curl -X DELETE http://localhost:8000/agents/{agent_id} \
+curl -X DELETE http://localhost:8000/api/v1/agents/{agent_type} \
   -H "Authorization: Bearer TOKEN"
 ```
 
 ### Campaigns
 
 ```bash
-# List campaigns
+# List campaigns for an org
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/campaigns
+  http://localhost:8000/api/v1/campaigns/org/{org_id}
 
 # Create campaign
-curl -X POST http://localhost:8000/campaigns \
+curl -X POST http://localhost:8000/api/v1/campaigns \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Q1 2024 Campaign",
-    "agent_id": "agent-uuid",
-    "contact_list": ["phone1", "phone2"]
+    "campaign_name": "Q2-Outreach",
+    "org_id": "org-uuid",
+    "agent_type": "sales-agent-v1",
+    "audience_name": "q2-leads"
   }'
-
-# Launch campaign
-curl -X POST http://localhost:8000/campaigns/{campaign_id}/launch \
-  -H "Authorization: Bearer TOKEN"
-
-# Pause campaign
-curl -X POST http://localhost:8000/campaigns/{campaign_id}/pause \
-  -H "Authorization: Bearer TOKEN"
 ```
 
-### Call Logs
+### Call History (Meetings)
 
 ```bash
-# List call logs
+# List call logs for the org
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/call-logs
+  "http://localhost:8000/api/v1/meetings?agent_type=sales-agent-v1"
 
 # Get call details
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/call-logs/{call_id}
+  http://localhost:8000/api/v1/meetings/{meeting_id}
 
-# Get campaign's calls
+# Stream call recording audio
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/call-logs/campaign/{campaign_id}
+  http://localhost:8000/api/v1/meetings/{meeting_id}/recording \
+  -o recording.wav
 ```
 
-### Recordings
+### Analytics
 
 ```bash
-# List recordings
+# Get analytics for the org
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/call-recordings
-
-# Download recording
-curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/call-recordings/{call_id}/download \
-  -o recording.wav
-
-# Get transcript
-curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:8000/call-recordings/{call_id}/transcript
+  "http://localhost:8000/api/v1/analytics?start_date=2026-04-01T00:00:00Z&end_date=2026-04-30T23:59:59Z"
 ```
 
 ## Docker Commands
@@ -463,4 +452,4 @@ git log --oneline --graph
 
 ---
 
-Last updated: January 2024
+Last updated: April 2026

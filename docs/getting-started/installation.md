@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide will help you install and set up VoiceERA on your system.
+This guide will help you install and set up VoicEra on your system.
 
 ## System Requirements
 
@@ -15,8 +15,8 @@ This guide will help you install and set up VoiceERA on your system.
 - **OS:** Linux (Ubuntu 20.04 LTS or newer)
 - **RAM:** 16GB+
 - **CPU Cores:** 4+
-- **GPU:** NVIDIA GPU with CUDA support (for local AI4Bharat services)
 - **SSD:** 100GB+ NVMe SSD
+- **GPU:** NVIDIA GPU with CUDA support (only required if running self-hosted Indic STT/TTS model servers)
 
 ## Install Prerequisites
 
@@ -218,11 +218,9 @@ nano voicera_frontend/.env.local
 
 ```env
 # API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-NEXT_PUBLIC_VOICE_SERVER_URL=http://localhost:7860
-
-# Authentication
-NEXT_PUBLIC_AUTH_ENABLED=true
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+API_URL=http://localhost:8000
+VOICE_SERVER_URL=http://localhost:7860
 ```
 
 ## Verify Installation
@@ -273,8 +271,6 @@ This will build images for:
 - Frontend (Next.js)
 - Backend (FastAPI)
 - Voice Server (Pipecat)
-- AI4Bharat STT (optional)
-- AI4Bharat TTS (optional)
 
 ## Verify Build
 

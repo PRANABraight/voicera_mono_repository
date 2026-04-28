@@ -1,6 +1,6 @@
-# Contributing to VoiceERA
+# Contributing to VoicEra
 
-Guidelines for contributing to VoiceERA.
+Guidelines for contributing to VoicEra.
 
 ## Code of Conduct
 
@@ -40,7 +40,7 @@ Guidelines for contributing to VoiceERA.
 - Check [Issues](https://github.com/voicera/voicera_mono_repository/issues) for existing work
 - Create an issue for new features
 - Discuss major changes in issues first
-- Follow the [Roadmap](roadmap.md) for planned features
+- Follow the [Architecture Overview](../architecture/overview.md) for planned features
 
 ### 2. Code Style
 
@@ -531,12 +531,12 @@ git push origin v1.2.3
 - [Local Development Setup](../development/local-setup.md)
 - [Architecture](../architecture/overview.md)
 - [API Documentation](../api/rest-api.md)
-- [Style Guide](style-guide.md)
-- [Roadmap](roadmap.md)
+- [Testing Guide](testing.md)
+- [Architecture Overview](../architecture/overview.md)
 
 ## Thank You!
 
-Thank you for contributing to VoiceERA! Your efforts help make this project better for everyone.
+Thank you for contributing to VoicEra! Your efforts help make this project better for everyone.
 
 ---
 

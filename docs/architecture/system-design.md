@@ -6,7 +6,7 @@ Detailed technical design and component documentation.
 
 ### 1. Frontend Service
 
-**Stack:** Next.js 16+, React 18+, TailwindCSS 4+
+**Stack:** Next.js 16.x, React 18+, TailwindCSS 4+
 
 **Port:** 3000
 

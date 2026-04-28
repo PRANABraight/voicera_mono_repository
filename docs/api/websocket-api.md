@@ -1,562 +1,280 @@
-# WebSocket API Documentation
+# WebSocket API
 
-Real-time communication protocol for VoiceERA Voice Server.
+The Voice Server exposes two WebSocket endpoints for real-time audio streaming from telephony providers. These endpoints are called by **Vobiz** and **Ubona** infrastructure — not by browsers directly.
 
-## Connection
+> **Note:** The VoicEra dashboard does not connect to these WebSocket endpoints. All dashboard interactions go through the [Backend REST API](rest-api.md). The WebSocket endpoints documented here are the server-side interfaces that the telephony providers use to stream audio.
 
-```javascript
-// Client-side (JavaScript)
-const socket = new WebSocket('ws://localhost:7860/voice');
+---
 
-// Or with authentication
-const token = localStorage.getItem('token');
-const socket = new WebSocket(
-  `ws://localhost:7860/voice?token=${token}`
-);
+## Endpoints
+
+| Endpoint | Provider | Audio Format |
+|----------|----------|-------------|
+| `WS /agent/{agent_id}` | Vobiz | μ-law 8kHz or L16 PCM 16kHz |
+| `WS /ubona/stream/{agent_id}` | Ubona | μ-law 8kHz (PCMU) |
+
+Both endpoints implement the **Pipecat Pipelined Processing** model: incoming audio is transcribed (STT) → fed to the LLM → synthesized (TTS) → streamed back as audio frames to the telephony provider.
+
+---
+
+## Vobiz Media Stream Protocol
+
+### Connection flow
+
+```
+Vobiz infrastructure
+    │
+    │  1. POST /answer?agent_id=<id>  (Vobiz answer webhook)
+    │◀──  Voice Server returns XML: <Stream bidirectional="true"> wss://.../agent/<id> </Stream>
+    │
+    │  2. WebSocket connect → wss://.../agent/<id>
+    │──▶ Voice Server accepts
+    │
+    │  3. Client sends JSON: { "event": "start", "start": { "callSid": "...", "streamSid": "..." } }
+    │──▶ Voice Server begins Pipecat pipeline
+    │
+    │  4. Client sends media frames (audio from caller)
+    │──▶ STT → LLM → TTS
+    │◀── Voice Server sends media frames (audio response)
+    │
+    │  5. Call ends: WebSocket closes
 ```
 
-## Message Format
+### XML response (answer webhook)
 
-All messages are JSON:
+The `/answer` webhook returns XML instructing Vobiz to open a bidirectional WebSocket:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Stream bidirectional="true" keepCallAlive="true" contentType="audio/x-mulaw;rate=8000">
+        wss://your-server/agent/{agent_id}
+    </Stream>
+</Response>
+```
+
+For 16kHz mode (`SAMPLE_RATE=16000`):
+
+```xml
+<Stream bidirectional="true" keepCallAlive="true" contentType="audio/x-l16;rate=16000">
+    wss://your-server/agent/{agent_id}
+</Stream>
+```
+
+### Message format (8kHz μ-law mode)
+
+The Vobiz protocol is Plivo-compatible. All messages are JSON strings.
+
+**Vobiz → Voice Server: call start**
 
 ```json
 {
-  "type": "message_type",
-  "session_id": "session-uuid",
-  "timestamp": 1674003600000,
-  "payload": {}
+  "event": "start",
+  "start": {
+    "callSid": "CA1234567890",
+    "streamSid": "MX1234567890"
+  }
+}
+```
+
+**Vobiz → Voice Server: inbound audio (media frame)**
+
+```json
+{
+  "event": "media",
+  "media": {
+    "payload": "<base64-encoded μ-law audio>"
+  },
+  "streamId": "MX1234567890"
+}
+```
+
+**Voice Server → Vobiz: outbound audio (8kHz μ-law)**
+
+Handled by the Pipecat `PlivoFrameSerializer` base class.
+
+### Message format (16kHz L16 mode)
+
+**Vobiz → Voice Server: inbound audio**
+
+```json
+{
+  "event": "media",
+  "media": {
+    "payload": "<base64-encoded raw PCM 16kHz>"
+  }
+}
+```
+
+**Voice Server → Vobiz: outbound audio**
+
+```json
+{
+  "event": "playAudio",
+  "media": {
+    "contentType": "audio/x-l16",
+    "sampleRate": 16000,
+    "payload": "<base64-encoded raw PCM 16kHz>"
+  },
+  "streamId": "MX1234567890"
 }
 ```
 
 ---
 
-## Authentication
+## Ubona Media Stream Protocol
 
-### Client: Send Auth Message
+### Connection flow
+
+```
+Ubona infrastructure
+    │
+    │  1. POST /ubona  (Ubona answer webhook)
+    │◀──  Voice Server returns XML: <Stream bidirectional="true"> wss://.../ubona/stream/mahavistaar </Stream>
+    │
+    │  2. WebSocket connect → wss://.../ubona/stream/mahavistaar
+    │──▶ Voice Server accepts
+    │
+    │  3. Client MAY send: { "event": "connected" }  (optional)
+    │
+    │  4. Client sends:    { "event": "start", "callId": "...", "streamId": "..." }
+    │──▶ Voice Server begins Pipecat pipeline
+    │
+    │  5. Bidirectional audio exchange
+    │
+    │  6. WebSocket closes
+```
+
+!!! note
+    The Ubona endpoint is hardcoded to the `Mahavistaar` agent. The path ID `mahavistaar` is fixed. To use Ubona with a different agent, the server code must be updated.
+
+### XML response (Ubona answer webhook)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Stream bidirectional="true" keepCallAlive="true" contentType="audio/x-mulaw;rate=8000">
+        wss://your-server/ubona/stream/mahavistaar
+    </Stream>
+</Response>
+```
+
+### Message format
+
+All messages are JSON strings. Audio is base64-encoded μ-law (PCMU) at 8kHz.
+
+**Ubona → Voice Server: connected (optional)**
+
+```json
+{ "event": "connected" }
+```
+
+**Ubona → Voice Server: call start**
 
 ```json
 {
-  "type": "auth",
-  "token": "jwt-token-here",
-  "agent_id": "agent-uuid",
-  "campaign_id": "campaign-uuid"
+  "event": "start",
+  "callId": "call-uuid",
+  "streamId": "stream-uuid",
+  "start": {
+    "callId": "call-uuid",
+    "streamId": "stream-uuid"
+  }
 }
 ```
 
-### Server: Auth Response
+**Ubona → Voice Server: inbound audio**
 
 ```json
 {
-  "type": "auth_response",
-  "status": "success",
-  "session_id": "session-uuid",
-  "message": "Authentication successful"
+  "event": "media",
+  "media": {
+    "payload": "<base64-encoded μ-law 8kHz audio>"
+  }
 }
 ```
 
-Or on failure:
+**Ubona → Voice Server: DTMF tone**
 
 ```json
 {
-  "type": "auth_response",
-  "status": "error",
-  "message": "Invalid token"
+  "event": "dtmf",
+  "dtmf": {
+    "digit": "5"
+  }
+}
+```
+
+**Ubona → Voice Server: ping (keepalive)**
+
+```json
+{ "event": "ping", "ts": 1714545600000 }
+```
+
+**Voice Server → Ubona: pong**
+
+```json
+{ "event": "pong", "ts": 1714545600000 }
+```
+
+**Voice Server → Ubona: outbound audio**
+
+```json
+{
+  "event": "media",
+  "seqNum": 42,
+  "streamId": "stream-uuid",
+  "media": {
+    "ts": 1714545600000,
+    "payload": "<base64-encoded μ-law 8kHz audio>"
+  }
+}
+```
+
+**Voice Server → Ubona: interruption (barge-in)**
+
+```json
+{
+  "event": "clear",
+  "seqNum": 43,
+  "streamId": "stream-uuid"
 }
 ```
 
 ---
 
-## Call Control
+## Audio Formats
 
-### Client: Start Call
+| Mode | Encoding | Sample Rate | Channels | Used by |
+|------|----------|-------------|----------|---------|
+| Default (Vobiz) | μ-law (PCMU) | 8000 Hz | 1 (mono) | Vobiz telephony (8kHz) |
+| High quality (Vobiz) | L16 raw PCM | 16000 Hz | 1 (mono) | Vobiz telephony (16kHz) |
+| Ubona | μ-law (PCMU) | 8000 Hz | 1 (mono) | Ubona telephony |
 
-After authentication, server automatically signals readiness:
-
-```json
-{
-  "type": "ready",
-  "session_id": "session-uuid",
-  "message": "Ready to receive audio"
-}
-```
-
-### Client: Send Audio
-
-```json
-{
-  "type": "audio",
-  "session_id": "session-uuid",
-  "sequence": 1,
-  "format": "pcm_16k",
-  "data": "base64-encoded-audio-data"
-}
-```
-
-**Audio Format Details:**
-- Format: PCM 16-bit signed
-- Sample Rate: 16kHz (mono)
-- Duration: 100ms chunks
-- Encoding: base64 for JSON
-
-### Server: Send Response Audio
-
-```json
-{
-  "type": "audio",
-  "session_id": "session-uuid",
-  "sequence": 1,
-  "format": "pcm_16k",
-  "data": "base64-encoded-response-audio"
-}
-```
-
-### Client: Control Messages
-
-```json
-{
-  "type": "control",
-  "action": "pause|resume|end",
-  "session_id": "session-uuid"
-}
-```
-
-### Server: Status Updates
-
-```json
-{
-  "type": "status",
-  "status": "transcribing|processing|synthesizing",
-  "session_id": "session-uuid",
-  "message": "Processing your request..."
-}
-```
+The audio sample rate is configured by the `SAMPLE_RATE` environment variable on the Voice Server.
 
 ---
 
-## Metadata & Events
+## TCP_NODELAY
 
-### Client: Send Metadata
-
-```json
-{
-  "type": "metadata",
-  "session_id": "session-uuid",
-  "phone_number": "+1234567890",
-  "caller_id": "caller-name",
-  "agent_config": {
-    "language": "en",
-    "emotions_enabled": true
-  }
-}
-```
-
-### Server: Transcript Update
-
-Real-time transcript as user speaks:
-
-```json
-{
-  "type": "transcript",
-  "session_id": "session-uuid",
-  "partial": "Hello, I'd like to",
-  "complete": false,
-  "confidence": 0.95
-}
-```
-
-Final transcript:
-
-```json
-{
-  "type": "transcript",
-  "session_id": "session-uuid",
-  "partial": null,
-  "complete": "Hello, I'd like to know about your services",
-  "confidence": 0.98,
-  "final": true
-}
-```
-
-### Server: Agent Response
-
-```json
-{
-  "type": "response",
-  "session_id": "session-uuid",
-  "text": "Sure! I'd be happy to help. We offer...",
-  "agent_id": "agent-uuid",
-  "emotion": "helpful",
-  "sentiment": "positive"
-}
-```
-
-### Server: Error Messages
-
-```json
-{
-  "type": "error",
-  "session_id": "session-uuid",
-  "error_code": "STT_FAILED",
-  "message": "Failed to transcribe audio",
-  "details": "Please try again"
-}
-```
+All WebSocket connections on the Voice Server have **TCP_NODELAY** enabled (Nagle's algorithm disabled). This reduces per-packet latency for small audio frames and is critical for real-time voice quality.
 
 ---
 
-## Session Lifecycle
-
-### 1. Connection Established
-
-```
-Client connects → Server accepts → WebSocket open
-```
-
-### 2. Authentication
-
-```
-Client sends auth message
-      ↓
-Server validates JWT
-      ↓
-Server sends auth_response (success)
-      ↓
-Server sends ready message
-```
-
-### 3. Call Processing
-
-```
-Client sends audio chunk
-      ↓
-Server transcribes (STT)
-      ↓
-Server generates response (LLM)
-      ↓
-Server sends response audio (TTS)
-      ↓
-Client plays audio
-      ↓
-(Loop continues)
-```
-
-### 4. Call Termination
-
-```
-Client sends control message (action: "end")
-      ↓
-Server stops audio stream
-      ↓
-Server saves recording
-      ↓
-Server sends final transcript & analytics
-      ↓
-Server closes connection
-```
-
----
-
-## Example: JavaScript Client
-
-```javascript
-class VoiceClient {
-  constructor(serverUrl, token) {
-    this.socket = null;
-    this.serverUrl = serverUrl;
-    this.token = token;
-    this.sessionId = null;
-    this.mediaRecorder = null;
-  }
-
-  async connect(agentId) {
-    return new Promise((resolve, reject) => {
-      this.socket = new WebSocket(this.serverUrl);
-
-      this.socket.onopen = () => {
-        // Send authentication
-        this.socket.send(JSON.stringify({
-          type: 'auth',
-          token: this.token,
-          agent_id: agentId
-        }));
-      };
-
-      this.socket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-
-        if (message.type === 'auth_response') {
-          if (message.status === 'success') {
-            this.sessionId = message.session_id;
-            resolve(this.sessionId);
-          } else {
-            reject(new Error(message.message));
-          }
-        }
-
-        if (message.type === 'ready') {
-          this.startAudioCapture();
-        }
-
-        if (message.type === 'audio') {
-          this.playAudio(message.data);
-        }
-
-        if (message.type === 'transcript') {
-          console.log('Transcript:', message.partial || message.complete);
-        }
-
-        if (message.type === 'response') {
-          console.log('Agent:', message.text);
-        }
-
-        if (message.type === 'error') {
-          console.error('Error:', message.message);
-        }
-      };
-
-      this.socket.onerror = (error) => {
-        reject(error);
-      };
-    });
-  }
-
-  async startAudioCapture() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true
-    });
-
-    this.mediaRecorder = new MediaRecorder(stream);
-
-    this.mediaRecorder.ondataavailable = (event) => {
-      const audioBlob = event.data;
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const arrayBuffer = reader.result;
-        const base64 = btoa(
-          String.fromCharCode(...new Uint8Array(arrayBuffer))
-        );
-
-        this.socket.send(JSON.stringify({
-          type: 'audio',
-          session_id: this.sessionId,
-          data: base64,
-          format: 'pcm_16k'
-        }));
-      };
-
-      reader.readAsArrayBuffer(audioBlob);
-    };
-
-    this.mediaRecorder.start(100); // Send chunks every 100ms
-  }
-
-  playAudio(base64Data) {
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const audioBuffer = audioContext.createBuffer(1, bytes.length, 16000);
-    const channelData = audioBuffer.getChannelData(0);
-
-    for (let i = 0; i < bytes.length; i++) {
-      channelData[i] = (bytes[i] - 128) / 128;
-    }
-
-    const audioSource = audioContext.createBufferSource();
-    audioSource.buffer = audioBuffer;
-    audioSource.connect(audioContext.destination);
-    audioSource.start(0);
-  }
-
-  end() {
-    this.mediaRecorder.stop();
-
-    this.socket.send(JSON.stringify({
-      type: 'control',
-      action: 'end',
-      session_id: this.sessionId
-    }));
-
-    this.socket.close();
-  }
-
-  pause() {
-    this.mediaRecorder.pause();
-    this.socket.send(JSON.stringify({
-      type: 'control',
-      action: 'pause',
-      session_id: this.sessionId
-    }));
-  }
-
-  resume() {
-    this.mediaRecorder.resume();
-    this.socket.send(JSON.stringify({
-      type: 'control',
-      action: 'resume',
-      session_id: this.sessionId
-    }));
-  }
-}
-
-// Usage
-const client = new VoiceClient(
-  'ws://localhost:7860/voice',
-  'jwt-token'
-);
-
-client.connect('agent-uuid').then((sessionId) => {
-  console.log('Connected:', sessionId);
-  // Client will automatically start recording
-});
-```
-
----
-
-## Example: Python Client
-
-```python
-import json
-import asyncio
-import aiohttp
-import pyaudio
-import numpy as np
-from base64 import b64encode, b64decode
-
-class VoiceClient:
-    def __init__(self, server_url, token):
-        self.server_url = server_url
-        self.token = token
-        self.session_id = None
-        self.websocket = None
-
-    async def connect(self, agent_id):
-        """Establish WebSocket connection"""
-        async with aiohttp.ClientSession() as session:
-            async with session.ws_connect(self.server_url) as ws:
-                self.websocket = ws
-
-                # Send authentication
-                await ws.send_json({
-                    'type': 'auth',
-                    'token': self.token,
-                    'agent_id': agent_id
-                })
-
-                # Handle authentication response
-                async for message in ws:
-                    data = json.loads(message.data)
-
-                    if data['type'] == 'auth_response':
-                        if data['status'] == 'success':
-                            self.session_id = data['session_id']
-                            await self.start_audio_capture()
-                        break
-
-    async def start_audio_capture(self):
-        """Capture microphone input and send to server"""
-        p = pyaudio.PyAudio()
-        stream = p.open(
-            format=pyaudio.paInt16,
-            channels=1,
-            rate=16000,
-            input=True,
-            frames_per_buffer=1024
-        )
-
-        try:
-            while True:
-                data = stream.read(1024)
-                base64_data = b64encode(data).decode()
-
-                await self.websocket.send_json({
-                    'type': 'audio',
-                    'session_id': self.session_id,
-                    'data': base64_data,
-                    'format': 'pcm_16k'
-                })
-
-                # Process server responses
-                async for message in self.websocket:
-                    server_data = json.loads(message.data)
-
-                    if server_data['type'] == 'transcript':
-                        if server_data.get('final'):
-                            print(f"Transcript: {server_data['complete']}")
-
-                    elif server_data['type'] == 'response':
-                        print(f"Agent: {server_data['text']}")
-
-                    elif server_data['type'] == 'audio':
-                        await self.play_audio(server_data['data'])
-
-                    break
-
-        finally:
-            stream.stop_stream()
-            stream.close()
-            p.terminate()
-
-    async def play_audio(self, base64_data):
-        """Decode and play audio response"""
-        audio_bytes = b64decode(base64_data)
-        audio_array = np.frombuffer(audio_bytes, dtype=np.int16)
-
-        # Play audio (simplified)
-        # In production, use sounddevice or similar
-        print(f"Playing {len(audio_array)} samples")
-
-    async def end(self):
-        """End the call"""
-        await self.websocket.send_json({
-            'type': 'control',
-            'action': 'end',
-            'session_id': self.session_id
-        })
-        await self.websocket.close()
-
-# Usage
-async def main():
-    client = VoiceClient('ws://localhost:7860/voice', 'jwt-token')
-    await client.connect('agent-uuid')
-
-asyncio.run(main())
-```
-
----
-
-## Error Handling
-
-Common WebSocket errors:
-
-| Code | Message | Action |
-|------|---------|--------|
-| 1000 | Normal closure | Connection ended normally |
-| 1002 | Protocol error | Invalid message format |
-| 1003 | Unsupported data | Invalid message type |
-| 1008 | Policy violation | Invalid token |
-| 1011 | Server error | Internal server error |
-
----
-
-## Best Practices
-
-1. **Audio Quality:** Send 16kHz mono PCM for best compatibility
-2. **Chunk Size:** 100ms chunks (1600 samples at 16kHz)
-3. **Error Handling:** Implement retry logic for network failures
-4. **Resource Cleanup:** Always close WebSocket and stop audio capture
-5. **Token Refresh:** Refresh JWT before it expires
-6. **Logging:** Log all errors for debugging
+## Pipeline per call
+
+When a WebSocket connection is accepted and the `start` event is received, the Voice Server:
+
+1. Fetches the agent configuration from the backend (`GET /api/v1/agents/config/{agent_id}`)
+2. Builds a Pipecat pipeline: **STT → LLM → TTS → audio output**
+3. Streams audio frames from the telephony provider through the pipeline
+4. Sends synthesized audio responses back to the telephony provider
+5. On disconnect, saves the call recording and transcript to MinIO and notifies the backend
 
 ---
 
 ## Next Steps
 
-- **[REST API](rest-api.md)** - HTTP endpoints
-- **[Voice Server](../services/voice-server.md)** - Server documentation
-- **[Quick Start](../getting-started/quickstart.md)** - Get started
+- **[Voice Server](../services/voice-server.md)** — Voice Server configuration and agent setup
+- **[REST API](rest-api.md)** — Backend HTTP API reference
+- **[Analytics & Call Logs](../services/analytics.md)** — How call data is stored after sessions end

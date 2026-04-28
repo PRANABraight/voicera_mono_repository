@@ -1,19 +1,19 @@
-# VoicERA Mono Repository
+# VoicEra Mono Repository
 
-A complete voice AI building block with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.
+A complete voice AI platform with telephony integration, featuring real-time speech-to-text, text-to-speech, and LLM-powered conversational agents.
 
 ## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         VoicERA_mono_repository                  │
+│                       VoicEra Platform                           │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
 │  │   Frontend   │    │   Backend    │    │ Voice Server │       │
 │  │   (Next.js)  │◄──►│  (FastAPI)   │◄──►│  (Pipecat)   │       │
 │  │   :3000      │    │   :8000      │    │   :7860      │       │
-│  └──────────────┘    └──────────────┘    └──────────────┘       │
+│  └──────────────┘    └──────────────┘    └──────┬───────┘       │
 │                             │                   │                │
 │                             ▼                   ▼                │
 │                      ┌──────────────┐    ┌──────────────┐       │
@@ -21,13 +21,8 @@ A complete voice AI building block with telephony integration, featuring real-ti
 │                      │   :27017     │    │  :9000/:9001 │       │
 │                      └──────────────┘    └──────────────┘       │
 │                                                                  │
-│  ┌──────────────────────────────────────────────────────┐       │
-│  │            Optional: Local AI4Bharat Servers          │       │
-│  │  ┌──────────────┐              ┌──────────────┐      │       │
-│  │  │  STT Server  │              │  TTS Server  │      │       │
-│  │  │   :8001      │              │   :8002      │      │       │
-│  │  └──────────────┘              └──────────────┘      │       │
-│  └──────────────────────────────────────────────────────┘       │
+│                   Voice Server integrates configurable           │
+│                   STT / LLM / TTS provider backends              │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -40,9 +35,7 @@ A complete voice AI building block with telephony integration, featuring real-ti
 | `backend` | 8000 | FastAPI REST API for data management |
 | `voice_server` | 7860 | Real-time voice processing with Pipecat |
 | `mongodb` | 27017 | Primary database |
-| `minio` | 9000/9001 | Object storage for recordings & transcripts |
-| `ai4bharat_stt_server` | 8001 | Local Indic STT (optional) |
-| `ai4bharat_tts_server` | 8002 | Local Indic TTS (optional) |
+| `minio` | 9000/9001 | Object storage for recordings and transcripts |
 
 ---
 
@@ -150,7 +143,7 @@ SECRET_KEY=your-secret-key      # Generate: python -c "import secrets; print(sec
 # Email (Mailtrap)
 MAILTRAP_API_TOKEN=your-mailtrap-token
 MAILTRAP_FROM_EMAIL=noreply@voicera.com
-MAILTRAP_FROM_NAME=VoicERA
+MAILTRAP_FROM_NAME=VoicEra
 FRONTEND_URL=http://localhost:3000
 
 # Internal API (service-to-service auth)
@@ -205,34 +198,25 @@ MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
 MINIO_SECURE=false
 
-# Bhashini STT (cloud-based)
+# STT Provider Keys (set the key for whichever provider you configure per agent)
+DEEPGRAM_API_KEY=your-deepgram-api-key
+GOOGLE_STT_CREDENTIALS_PATH=credentials/google_stt.json
 BHASHINI_API_KEY=your-bhashini-api-key
 BHASHINI_SOCKET_URL=wss://dhruva-api.bhashini.gov.in
+INDIC_STT_SERVER_URL=http://localhost:8001  # Self-hosted Indic STT backend
 
-# Local AI4Bharat Servers (optional)
-AI4BHARAT_STT_URL=http://localhost:8001
-AI4BHARAT_TTS_URL=http://localhost:8002
+# TTS Provider Keys (set the key for whichever provider you configure per agent)
+CARTESIA_API_KEY=your-cartesia-api-key
+GOOGLE_TTS_CREDENTIALS_PATH=credentials/google_tts.json
+INDIC_TTS_SERVER_URL=http://localhost:8002  # Self-hosted Indic TTS backend
+
+# LLM Provider Keys
+OPENAI_API_KEY=sk-your-openai-api-key
 ```
 
-### AI4Bharat STT Server (`ai4bharat_stt_server/.env`)
-
-```bash
-# HuggingFace Token (if model is gated)
-HF_TOKEN=your-huggingface-token
-
-# Server port (default: 8001)
-PORT=8001
-```
-
-### AI4Bharat TTS Server (`ai4bharat_tts_server/.env`)
-
-```bash
-# HuggingFace Token (if model is gated)
-HF_TOKEN=your-huggingface-token
-
-# Server port (default: 8002)
-PORT=8002
-```
+> STT, TTS, and LLM providers are configured **per agent** via JSON config files.
+> You only need to provide keys for the providers your agents actually use.
+> See the [Voice Server README](voice_2_voice_server/README.md) for provider options.
 
 ---
 
@@ -256,26 +240,9 @@ PORT=8002
    ```bash
    cd voice_2_voice_server
    python -m venv venv
-   source venv/bin/activate
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    python main.py
-   ```
-
-4. **Start AI4Bharat servers (optional, requires GPU):**
-   ```bash
-   # STT Server
-   cd ai4bharat_stt_server
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   python server.py --port 8001
-
-   # TTS Server (in another terminal)
-   cd ai4bharat_tts_server
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   python server.py
    ```
 
 ### Using the Combined Dev Command

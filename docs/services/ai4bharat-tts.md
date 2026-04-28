@@ -1,338 +1,380 @@
-# AI4Bharat TTS Service
+# TTS Providers
 
-Documentation for the AI4Bharat Text-to-Speech (TTS) service integration.
+VoicEra treats Text-to-Speech (TTS) as a **swappable provider slot**. Each agent specifies its TTS provider by name in its JSON configuration file. No infrastructure changes are required to switch providers — simply update the agent config.
 
-## Overview
+## Provider Overview
 
-This optional service provides **natural speech synthesis for Indic languages** using AI4Bharat's IndicParler model.
+| Provider | Name in Config | Best For | Requires |
+|----------|----------------|----------|----------|
+| Cartesia | `cartesia` | English, expressive voices, low latency | `CARTESIA_API_KEY` |
+| Deepgram Aura | `deepgram` | English, natural Aura voices | `DEEPGRAM_API_KEY` |
+| Google | `google` | Broad language support, WaveNet/Neural2 | Service account credentials |
+| OpenAI | `openai` | General purpose, multiple voice personas | `OPENAI_API_KEY` |
+| ElevenLabs | `elevenlabs` | High-quality voices, streaming | `ELEVENLABS_API_KEY` |
+| Sarvam | `sarvam` | Indic languages, cloud API | `SARVAM_API_KEY` |
+| Bhashini | `bhashini` | Indic languages, government API | `BHASHINI_TTS_SERVER_URL`, `BHASHINI_TTS_AUTH_TOKEN` |
+| AI4Bharat Indic | `indic-parler-tts` | Indic languages, self-hosted | `INDIC_TTS_SERVER_URL` |
 
-**Supported Languages:**
-- Hindi (hi)
-- Tamil (ta)
-- Telugu (te)
-- Kannada (kn)
-- Malayalam (ml)
-- Bengali (bn)
-- Punjabi (pa)
-- Marathi (mr)
-- Gujarati (gu)
-- And more...
+---
 
-**Advantages:**
-- Free and open-source
-- Optimized for Indic languages
-- Self-hosted (no API calls needed)
-- Natural-sounding voices
-- Multiple speaker options
-- Can run on GPU for better performance
+## Configuring TTS per Agent
 
-## Quick Start
+TTS is set in the agent's JSON configuration file under `tts_model`:
 
-### Installation
-
-```bash
-cd ai4bharat_tts_server
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Download models
-python download_models.py
-```
-
-### Running the Service
-
-```bash
-# Development
-python server.py
-
-# Via Docker
-docker build -t ai4bharat-tts .
-docker run -p 8002:8002 ai4bharat-tts
-
-# With GPU support
-docker run --gpus all -p 8002:8002 ai4bharat-tts
-```
-
-## Configuration
-
-### Environment Variables
-
-```env
-# Server
-HOST=0.0.0.0
-PORT=8002
-WORKERS=2
-
-# Model
-MODEL_NAME=indic-parler-hi
-MODEL_PATH=/models
-DEVICE=cuda                    # cuda or cpu
-ENABLE_CACHING=true
-
-# Audio
-SAMPLE_RATE=16000
-AUDIO_FORMAT=wav
-SPEED=1.0                      # 0.5 - 2.0
-
-# Logging
-LOG_LEVEL=INFO
-```
-
-## API Endpoints
-
-### Synthesize
-
-**Endpoint:** `POST /synthesize`
-
-**Request:**
 ```json
 {
-  "text": "नमस्ते, आपका स्वागत है।",
-  "language": "hi",
-  "speaker": "female",
-  "speed": 1.0
+  "tts_model": {
+    "name": "cartesia",
+    "language": "English",
+    "args": {
+      "model": "sonic-2",
+      "voice_id": "bf0a246a-8642-498a-9950-80c35e9276b5"
+    }
+  }
 }
 ```
 
-**Response:**
-```
-Content-Type: audio/wav
-Body: Binary audio data (16-bit PCM, 16kHz)
-```
+The `name` field selects the provider. The `language` field is resolved to the provider-specific language code via the mappings in `voice_2_voice_server/config/tts_mappings.py`. Additional provider-specific parameters go under `args`.
 
-### Health Check
+---
 
-```
-GET /health
-```
+## Provider Reference
 
-## Speakers & Voices
+### Cartesia
 
-### Available Speakers
+Cartesia is the recommended default for English deployments. It offers low-latency streaming synthesis with expressive, natural-sounding voices.
 
-Each language supports multiple speakers:
-
-```
-Hindi (hi):
-  - female (default)
-  - male
-  - child
-
-Tamil (ta):
-  - female (default)
-  - male
-
-Telugu (te):
-  - female (default)
-  - male
-
-And so on for other languages...
-```
-
-## Integration with VoiceERA
-
-### Configuration
-
-In `voice_2_voice_server/.env`:
-
-```env
-TTS_PROVIDER=ai4bharat
-TTS_SERVICE_URL=http://ai4bharat_tts_server:8002
-TTS_LANGUAGE=hi
-TTS_SPEAKER=female
-TTS_SPEED=1.0
-```
-
-### Usage
-
-```python
-class AI4BharatTTS:
-    def __init__(self, service_url, language="hi", speaker="female"):
-        self.service_url = service_url
-        self.language = language
-        self.speaker = speaker
-    
-    async def synthesize(self, text, speed=1.0):
-        import aiohttp
-        
-        async with aiohttp.ClientSession() as session:
-            response = await session.post(
-                f"{self.service_url}/synthesize",
-                json={
-                    "text": text,
-                    "language": self.language,
-                    "speaker": self.speaker,
-                    "speed": speed
-                }
-            )
-            audio_data = await response.read()
-            return audio_data
-```
-
-## Voice Customization
-
-### Adjust Speed
-
-```python
-# Slow down speech
-await tts.synthesize("Hello", speed=0.8)
-
-# Speed up speech
-await tts.synthesize("Hello", speed=1.2)
-
-# Range: 0.5 (very slow) to 2.0 (very fast)
-```
-
-### Choose Speaker
-
-```python
-# Female voice
-response = await session.post(
-    url,
-    json={
-        "text": "नमस्ते",
-        "speaker": "female"
-    }
-)
-
-# Male voice
-response = await session.post(
-    url,
-    json={
-        "text": "नमस्ते",
-        "speaker": "male"
-    }
-)
-```
-
-## Performance
-
-### Benchmarks
-
-| Language | Quality | Speed | GPU Required |
-|----------|---------|-------|--------------|
-| Hindi | High | Real-time | Yes (recommended) |
-| Tamil | High | Real-time | Yes (recommended) |
-| Telugu | High | Real-time | Yes (recommended) |
-| Kannada | High | Real-time | Yes (recommended) |
-
-### Optimization Tips
-
-- Enable audio caching for repeated text
-- Use GPU for production deployments
-- Pre-warm models on service startup
-- Batch synthesis requests when possible
-- Use appropriate sample rate (16kHz recommended)
-
-## Caching Strategy
-
-### Enable Caching
-
-```env
-ENABLE_CACHING=true
-CACHE_SIZE_MB=500
-CACHE_TTL_HOURS=24
-```
-
-### How Caching Works
-
-```
-Request: "नमस्ते" in Hindi
-  │
-  ├─► Check cache
-  │      ├─► Cache HIT: Return cached audio
-  │      └─► Cache MISS: Generate and cache
-  │
-  └─► Return audio to client
-```
-
-### Cache Key
-
-```python
-cache_key = f"{text}:{language}:{speaker}:{speed}"
-# Example: "नमस्ते:hi:female:1.0"
-```
-
-## Troubleshooting
-
-### Service won't start
+**Environment variable:**
 
 ```bash
-# Check Python version
-python --version  # Should be 3.10+
-
-# Check dependencies
-pip list | grep torch
-
-# Download models
-python download_models.py
+CARTESIA_API_KEY=your-cartesia-api-key
 ```
 
-### No audio output
+**Agent config example:**
 
-- Verify text is in the correct language
-- Check speaker name is valid for the language
-- Ensure model is properly downloaded
-- Check service logs for errors
+```json
+{
+  "tts_model": {
+    "name": "cartesia",
+    "language": "English",
+    "args": {
+      "model": "sonic-2",
+      "voice_id": "bf0a246a-8642-498a-9950-80c35e9276b5"
+    }
+  }
+}
+```
 
-### Audio quality issues
+**Available models:** `sonic-3`, `sonic-2`, `sonic-multilingual`
 
-- Verify language matches text language
-- Try different speaker
-- Adjust speed parameter
-- Check input text for special characters
+Voice IDs are found in the [Cartesia Voice Library](https://play.cartesia.ai/voices).
 
-### Out of memory
+---
 
-- Reduce cache size
-- Disable caching if not needed
-- Use CPU instead of GPU
-- Enable model quantization
+### Deepgram Aura
 
-### Slow synthesis
+Deepgram provides the Aura family of voices for low-latency TTS optimized for telephony.
 
-- Enable GPU if available
-- Check system resources (CPU, memory)
-- Enable caching for repeated text
-- Reduce batch size
+**Environment variable:**
 
-## Advanced Configuration
+```bash
+DEEPGRAM_API_KEY=your-deepgram-api-key
+```
 
-### Docker Compose Integration
+**Agent config example:**
 
-```yaml
-services:
-  ai4bharat_tts_server:
-    build: ./ai4bharat_tts_server
-    container_name: voicera_tts
-    restart: unless-stopped
-    ports:
-      - "8002:8002"
-    environment:
-      HOST: 0.0.0.0
-      PORT: 8002
-      MODEL_PATH: /models
-      DEVICE: cuda
-    volumes:
-      - ./models:/models
-    devices:
-      - /dev/nvidia.com/gpu=all  # GPU support
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+```json
+{
+  "tts_model": {
+    "name": "deepgram",
+    "language": "English",
+    "args": {
+      "voice": "aura-2-helena-en"
+    }
+  }
+}
+```
+
+Voice names follow the pattern `aura-2-{name}-{lang}`. See the [Deepgram Aura docs](https://developers.deepgram.com/docs/tts-models) for the full list.
+
+---
+
+### Google
+
+Google TTS supports a wide range of languages using WaveNet and Neural2 voices, and includes telephony-optimized options.
+
+**Environment variables:**
+
+```bash
+GOOGLE_TTS_CREDENTIALS_PATH=credentials/google_tts.json
+```
+
+Place your Google Cloud service account JSON file at the path above (relative to `voice_2_voice_server/`).
+
+**Agent config example:**
+
+```json
+{
+  "tts_model": {
+    "name": "google",
+    "language": "English",
+    "args": {
+      "voice": "en-US-Neural2-F"
+    }
+  }
+}
 ```
 
 ---
 
-## Next Steps
+### OpenAI
 
-- **[STT Service](ai4bharat-stt.md)** - Speech-to-Text documentation
-- **[Configuration](../getting-started/configuration.md)** - Full configuration guide
-- **[Quick Start](../getting-started/quickstart.md)** - Get VoiceERA running
+OpenAI provides several voice personas for TTS via the standard API.
+
+**Environment variable:**
+
+```bash
+OPENAI_API_KEY=sk-your-openai-api-key
+```
+
+**Agent config example:**
+
+```json
+{
+  "tts_model": {
+    "name": "openai",
+    "language": "English",
+    "args": {
+      "voice": "nova"
+    }
+  }
+}
+```
+
+**Available voices:** `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`
+
+---
+
+### ElevenLabs
+
+ElevenLabs provides high-quality voice synthesis with streaming support.
+
+**Environment variable:**
+
+```bash
+ELEVENLABS_API_KEY=your-elevenlabs-api-key
+```
+
+**Agent config example:**
+
+```json
+{
+  "tts_model": {
+    "name": "elevenlabs",
+    "language": "English",
+    "args": {
+      "voice_id": "your-voice-id"
+    }
+  }
+}
+```
+
+---
+
+### Sarvam
+
+Sarvam AI provides cloud-based TTS optimised for Indian languages.
+
+**Environment variable:**
+
+```bash
+SARVAM_API_KEY=your-sarvam-api-key
+```
+
+**Agent config example:**
+
+```json
+{
+  "tts_model": {
+    "name": "sarvam",
+    "language": "Hindi"
+  }
+}
+```
+
+**Supported languages:** Hindi, Bengali, Gujarati, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu, English.
+
+---
+
+### Bhashini
+
+Bhashini is a Government of India initiative providing TTS APIs optimized for Indian languages. The TTS path uses a dedicated streaming HTTP server (separate from the STT socket connection).
+
+**Environment variables:**
+
+```bash
+BHASHINI_TTS_SERVER_URL=https://your-bhashini-tts-server
+BHASHINI_TTS_AUTH_TOKEN=your-bhashini-tts-token
+```
+
+**Agent config example:**
+
+```json
+{
+  "tts_model": {
+    "name": "bhashini",
+    "language": "Hindi"
+  }
+}
+```
+
+**Supported languages:** Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Punjabi, Marathi, Gujarati, and more.
+
+---
+
+### AI4Bharat Indic (Self-Hosted)
+
+The AI4Bharat Indic TTS provider runs the IndicParler model on your own infrastructure. This is suitable for deployments that require data sovereignty or offline operation.
+
+The `ai4bharat_tts_server/` folder in this repository contains a FastAPI server that wraps the IndicParler model and exposes a streaming-compatible REST API.
+
+**Environment variable:**
+
+```bash
+INDIC_TTS_SERVER_URL=http://localhost:8002
+```
+
+**Agent config example:**
+
+```json
+{
+  "tts_model": {
+    "name": "indic-parler-tts",
+    "language": "Hindi"
+  }
+}
+```
+
+**Running the self-hosted server:**
+
+```bash
+cd ai4bharat_tts_server
+
+python -m venv venv
+source venv/bin/activate   # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Copy and configure environment
+cp .env.example .env
+
+# Start the server (default port 8002)
+python server.py
+```
+
+**With Docker (GPU recommended for production):**
+
+```bash
+# CPU
+docker build -t indic-tts .
+docker run -p 8002:8002 --env-file .env indic-tts
+
+# GPU
+docker run --gpus all -p 8002:8002 --env-file .env indic-tts
+```
+
+**Environment variables for the self-hosted server:**
+
+```bash
+HF_TOKEN=your-huggingface-token   # Required if model is gated on HuggingFace
+PORT=8002
+```
+
+**Supported languages:** Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Punjabi, Marathi, Gujarati, and more.
+
+**Performance notes:**
+
+| Language | Quality | GPU Recommended |
+|----------|---------|-----------------|
+| Hindi | High | Yes |
+| Tamil | High | Yes |
+| Telugu | High | Yes |
+| Kannada | High | Yes |
+
+---
+
+## AI4Bharat TTS Server API
+
+The `ai4bharat_tts_server/` directory runs the IndicParler model and streams audio as NDJSON chunks.
+
+### Endpoints
+
+**`POST /tts/stream`**
+
+Request body:
+
+```json
+{
+  "text": "नमस्ते, मैं आपकी कैसे मदद कर सकता हूँ?",
+  "description": "A calm female voice with clear pronunciation",
+  "speaker": "Divya",
+  "play_steps_in_s": 0.5
+}
+```
+
+| Field | Type | Range | Default | Notes |
+|-------|------|-------|---------|-------|
+| `text` | string | 1–5000 chars | required | Text to synthesize |
+| `description` | string | — | generic string | Voice style conditioning |
+| `speaker` | string | — | `Divya` | Speaker name |
+| `play_steps_in_s` | float | 0–2 | `0.5` | Streaming chunk size (seconds) |
+
+**Response:** `application/x-ndjson` — one JSON line per chunk:
+
+```json
+{"audio": "<base64 int16 PCM>", "sample_rate": 24000, "samples": 12000}
+{"audio": "<base64 int16 PCM>", "sample_rate": 24000, "samples": 12000}
+{"done": true}
+```
+
+**`GET /health`**
+
+```json
+{ "status": "ok", "device": "cuda", "sample_rate": 24000, "model_loaded": true }
+```
+
+### Model details
+
+| Property | Value |
+|----------|-------|
+| Model | `ai4bharat/indic-parler-tts` |
+| Base image | `pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime` |
+| Output format | int16 PCM (base64) |
+| Sample rate | 24000 Hz |
+| Precision | `bfloat16` on CUDA, `float32` on CPU |
+| Port | 8002 |
+
+### Running with GPU
+
+```bash
+docker run --gpus all \
+  -p 8002:8002 \
+  -e HF_TOKEN=your_token \
+  ai4bharat-tts
+```
+
+---
+
+## Adding a New TTS Provider
+
+1. Create a service class in `voice_2_voice_server/services/` implementing the Pipecat `TTSService` interface.
+2. Register it in `voice_2_voice_server/api/services.py` under the appropriate provider name.
+3. Add language code mappings in `voice_2_voice_server/config/tts_mappings.py` if needed.
+4. Document the required environment variables.
+
+---
+
+## Related
+
+- **[STT Providers](ai4bharat-stt.md)** — Speech-to-Text provider reference
+- **[Voice Server](voice-server.md)** — Voice Server architecture and configuration
+- **[Configuration Guide](../getting-started/configuration.md)** — Full environment configuration reference

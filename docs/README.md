@@ -1,6 +1,6 @@
-# VoiceERA Documentation
+# VoicEra Documentation
 
-Welcome to the official VoiceERA documentation!
+Welcome to the official VoicEra documentation!
 
 This documentation is built using [MkDocs](https://www.mkdocs.org/) with the [Material theme](https://squidfunk.github.io/mkdocs-material/).
 
@@ -75,7 +75,7 @@ docs/
 
 ### Getting Started
 - **Installation**: Platform-specific installation instructions
-- **Quick Start**: Get VoiceERA running in 5 minutes
+- **Quick Start**: Get VoicEra running in 5 minutes
 - **Configuration**: Complete environment variable reference
 
 ### Architecture
@@ -101,7 +101,7 @@ docs/
 
 ### Development
 - **Local Setup**: Development environment setup
-- **Contributing**: How to contribute to VoiceERA
+- **Contributing**: How to contribute to VoicEra
 - **Testing**: Testing guidelines and examples
 
 ### Troubleshooting
@@ -265,8 +265,8 @@ mkdocs build
 
 ## License
 
-Documentation is under the same license as VoiceERA.
+Documentation is under the same license as VoicEra.
 
 ---
 
-Made with ❤️ by the VoiceERA Team
+Made with ❤️ by the VoicEra Team

@@ -1,246 +1,195 @@
 # API Endpoints Reference
 
-Quick reference for all VoiceERA API endpoints.
+Quick reference for all VoicEra Backend API endpoints. All routes are prefixed with `/api/v1`.
 
-## Authentication
+## Authentication Schemes
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/auth/register` | - | Register new user |
-| POST | `/auth/login` | - | User login |
-| POST | `/auth/refresh-token` | ✓ | Refresh JWT token |
-| GET | `/auth/me` | ✓ | Get current user info |
-| POST | `/auth/logout` | ✓ | User logout |
-| POST | `/auth/forgot-password` | - | Request password reset |
-| POST | `/auth/reset-password` | - | Reset password with token |
+| Scheme | Used for |
+|--------|---------|
+| **JWT Bearer** | Dashboard users — attach `Authorization: Bearer <token>` |
+| **API Key** | Service-to-service calls — attach `X-API-Key: <INTERNAL_API_KEY>` |
+| **None** | Public endpoints (signup, login, password reset, call-recordings webhook) |
+
+---
 
 ## Users
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/users` | ✓ | List all users (admin) |
-| GET | `/users/{user_id}` | ✓ | Get user details |
-| PUT | `/users/{user_id}` | ✓ | Update user |
-| DELETE | `/users/{user_id}` | ✓ | Delete user |
-| GET | `/users/{user_id}/agents` | ✓ | Get user's agents |
-| GET | `/users/{user_id}/campaigns` | ✓ | Get user's campaigns |
+| POST | `/api/v1/users/signup` | None | Register new user / organisation |
+| POST | `/api/v1/users/login` | None | Login, receive JWT |
+| GET | `/api/v1/users/me` | JWT | Current user profile |
+| GET | `/api/v1/users/{email}` | JWT | Look up user by email |
+| POST | `/api/v1/users/forgot-password` | None | Request password reset email |
+| POST | `/api/v1/users/reset-password` | None | Reset password using token |
 
-## Agents
+---
+
+## Agents (Assistants)
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/agents` | ✓ | List agents |
-| POST | `/agents` | ✓ | Create agent |
-| GET | `/agents/{agent_id}` | ✓ | Get agent details |
-| PUT | `/agents/{agent_id}` | ✓ | Update agent |
-| DELETE | `/agents/{agent_id}` | ✓ | Delete agent |
-| GET | `/agents/{agent_id}/config` | ✓ | Get agent configuration |
-| POST | `/agents/{agent_id}/clone` | ✓ | Clone agent |
-| GET | `/agents/{agent_id}/campaigns` | ✓ | Get agent's campaigns |
+| POST | `/api/v1/agents` | JWT | Create a new agent |
+| GET | `/api/v1/agents/org/{org_id}` | JWT | List all agents for an organisation |
+| GET | `/api/v1/agents/{agent_type}` | JWT | Get agent by type/name |
+| PUT | `/api/v1/agents/{agent_type}` | JWT | Update agent configuration |
+| DELETE | `/api/v1/agents/{agent_type}` | JWT | Delete agent |
+| GET | `/api/v1/agents/config/{agent_type}` | API Key | Get agent config (voice server → backend) |
+| GET | `/api/v1/agents/config/id/{agent_id}` | API Key | Get agent config by ID |
+| GET | `/api/v1/agents/by-phone/{phone_number}` | API Key | Get agent config by phone number |
+
+---
+
+## Meetings (Call Logs)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/meetings` | API Key | Create call log entry (voice server → backend) |
+| PATCH | `/api/v1/meetings/{meeting_id}` | API Key | Update call end time |
+| GET | `/api/v1/meetings` | JWT | List meetings for the current org (optional `?agent_type=`) |
+| GET | `/api/v1/meetings/{meeting_id}` | JWT | Get single meeting details |
+| GET | `/api/v1/meetings/{meeting_id}/recording` | JWT | Stream call recording audio |
+
+---
+
+## Call Recordings
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/call-recordings` | None* | Save recording metadata (voice server → backend) |
+
+*Unauthenticated by design — restrict at network level in production.
+
+---
 
 ## Campaigns
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/campaigns` | ✓ | List campaigns |
-| POST | `/campaigns` | ✓ | Create campaign |
-| GET | `/campaigns/{campaign_id}` | ✓ | Get campaign details |
-| PUT | `/campaigns/{campaign_id}` | ✓ | Update campaign |
-| DELETE | `/campaigns/{campaign_id}` | ✓ | Delete campaign |
-| POST | `/campaigns/{campaign_id}/launch` | ✓ | Launch campaign |
-| POST | `/campaigns/{campaign_id}/pause` | ✓ | Pause campaign |
-| POST | `/campaigns/{campaign_id}/resume` | ✓ | Resume campaign |
-| POST | `/campaigns/{campaign_id}/stop` | ✓ | Stop campaign |
-| GET | `/campaigns/{campaign_id}/stats` | ✓ | Campaign statistics |
+| POST | `/api/v1/campaigns` | JWT | Create campaign |
+| GET | `/api/v1/campaigns/org/{org_id}` | JWT | List all campaigns for an org |
+| GET | `/api/v1/campaigns/{campaign_name}` | JWT | Get campaign by name |
 
-## Call Logs
+---
+
+## Audiences
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/call-logs` | ✓ | List call logs |
-| GET | `/call-logs/{call_id}` | ✓ | Get call details |
-| DELETE | `/call-logs/{call_id}` | ✓ | Delete call log |
-| GET | `/call-logs/campaign/{campaign_id}` | ✓ | Get campaign's calls |
-| GET | `/call-logs/agent/{agent_id}` | ✓ | Get agent's calls |
-| GET | `/call-logs/date/{date}` | ✓ | Get calls by date |
-| PUT | `/call-logs/{call_id}/notes` | ✓ | Add notes to call |
-| GET | `/call-logs/{call_id}/transcript` | ✓ | Get call transcript |
+| POST | `/api/v1/audience` | JWT | Create audience |
+| GET | `/api/v1/audience` | JWT | List all audiences (optional `?phone_number=`) |
+| GET | `/api/v1/audience/{audience_name}` | JWT | Get audience by name |
 
-## Recordings
+---
+
+## Phone Numbers
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/call-recordings` | ✓ | List recordings |
-| GET | `/call-recordings/{call_id}` | ✓ | Get recording metadata |
-| GET | `/call-recordings/{call_id}/download` | ✓ | Download recording |
-| DELETE | `/call-recordings/{call_id}` | ✓ | Delete recording |
-| GET | `/call-recordings/{call_id}/transcript` | ✓ | Get transcript |
-| POST | `/call-recordings/{call_id}/transcribe` | ✓ | Request transcription |
-| GET | `/call-recordings/{call_id}/transcript/download` | ✓ | Download transcript |
+| GET | `/api/v1/phone-numbers/org/{org_id}` | JWT | List all phone numbers for an org |
+| GET | `/api/v1/phone-numbers/agent/{agent_type}` | JWT | Get number attached to agent |
+| POST | `/api/v1/phone-numbers/attach` | JWT | Attach phone number to agent |
+| DELETE | `/api/v1/phone-numbers/detach` | JWT | Detach phone number from agent |
+
+---
 
 ## Analytics
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/analytics/calls` | ✓ | Call statistics |
-| GET | `/analytics/sentiment` | ✓ | Sentiment analysis |
-| GET | `/analytics/emotions` | ✓ | Emotion distribution |
-| GET | `/analytics/top-phrases` | ✓ | Most common phrases |
-| GET | `/analytics/agent-performance` | ✓ | Agent metrics |
-| GET | `/analytics/campaign-stats` | ✓ | Campaign statistics |
-| GET | `/analytics/hourly-calls` | ✓ | Calls by hour |
-| GET | `/analytics/daily-calls` | ✓ | Calls by day |
-| GET | `/analytics/export` | ✓ | Export analytics to CSV |
+| GET | `/api/v1/analytics` | JWT | Get call analytics for the org |
+
+**Query parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `agent_type` | string | Filter by agent |
+| `phone_number` | string | Filter by phone number |
+| `start_date` | ISO 8601 string | Start of date range |
+| `end_date` | ISO 8601 string | End of date range |
+
+---
 
 ## Integrations
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/integrations` | ✓ | List integrations |
-| POST | `/integrations` | ✓ | Create integration |
-| GET | `/integrations/{integration_id}` | ✓ | Get integration details |
-| PUT | `/integrations/{integration_id}` | ✓ | Update integration |
-| DELETE | `/integrations/{integration_id}` | ✓ | Delete integration |
-| POST | `/integrations/{integration_id}/test` | ✓ | Test integration |
-| GET | `/integrations/{integration_id}/status` | ✓ | Get status |
+| POST | `/api/v1/integrations` | JWT | Add an integration (API key for a provider) |
+| GET | `/api/v1/integrations` | JWT | List all integrations for the org |
+| GET | `/api/v1/integrations/{model}` | JWT | Get integration by model name |
+| DELETE | `/api/v1/integrations/{model}` | JWT | Delete integration |
+| POST | `/api/v1/integrations/bot/get-api-key` | API Key | Retrieve integration key (voice server use) |
 
-## Webhooks
+---
+
+## Members
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/webhooks` | ✓ | List webhooks |
-| POST | `/webhooks` | ✓ | Create webhook |
-| GET | `/webhooks/{webhook_id}` | ✓ | Get webhook |
-| PUT | `/webhooks/{webhook_id}` | ✓ | Update webhook |
-| DELETE | `/webhooks/{webhook_id}` | ✓ | Delete webhook |
-| POST | `/webhooks/{webhook_id}/test` | ✓ | Send test event |
-| GET | `/webhooks/{webhook_id}/logs` | ✓ | Get webhook logs |
+| POST | `/api/v1/members/add-member` | None | Invite / add member to org |
+| GET | `/api/v1/members/{org_id}` | JWT | List org members |
+| POST | `/api/v1/members/delete-member` | JWT | Remove member from org |
 
-## Admin
+---
+
+## Knowledge Base
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/admin/users` | ✓ admin | List all users |
-| POST | `/admin/users/{user_id}/activate` | ✓ admin | Activate user |
-| POST | `/admin/users/{user_id}/deactivate` | ✓ admin | Deactivate user |
-| GET | `/admin/system/stats` | ✓ admin | System statistics |
-| GET | `/admin/system/health` | ✓ admin | Health status |
-| POST | `/admin/system/maintenance` | ✓ admin | Enable maintenance mode |
-| GET | `/admin/logs` | ✓ admin | System logs |
+| GET | `/api/v1/knowledge` | JWT | List knowledge documents for org |
+| POST | `/api/v1/knowledge/upload` | JWT | Upload a PDF document (multipart form) |
+| DELETE | `/api/v1/knowledge/{document_id}` | JWT | Delete a knowledge document |
 
-## Health & Status
+---
+
+## RAG / Retrieval
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/health` | - | Service health |
-| GET | `/readiness` | - | Readiness probe |
-| GET | `/liveness` | - | Liveness probe |
-| GET | `/version` | - | API version |
-| GET | `/docs` | - | Swagger UI |
-| GET | `/redoc` | - | ReDoc UI |
-| GET | `/openapi.json` | - | OpenAPI spec |
+| POST | `/api/v1/rag/retrieve` | API Key | Retrieve relevant chunks for a query (voice server use) |
 
 ---
 
-## Query Parameters
+## Telemetry
 
-### Pagination
-
-```
-?skip=0        # Number of items to skip (default: 0)
-?limit=10      # Number of items to return (default: 10, max: 100)
-```
-
-### Filtering
-
-```
-?status=active                    # Filter by status
-?agent_id=uuid                    # Filter by agent
-?campaign_id=uuid                 # Filter by campaign
-?date_from=2024-01-01            # Start date
-?date_to=2024-01-31              # End date
-?phone_number=%2B1234567890      # Filter by phone (URL encoded)
-?search=keyword                   # Search in name/description
-```
-
-### Sorting
-
-```
-?sort=created_at              # Sort field
-?order=asc                    # asc or desc
-?sort=-created_at             # Descending (shorthand)
-?sort=name,created_at         # Multiple sorts
-```
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/v1/telemetry` | JWT | Live GPU/VRAM metrics from AI4Bharat STT and TTS servers |
 
 ---
 
-## Common Responses
+## Vobiz Telephony
 
-### Success (200 OK)
-
-```json
-{
-  "success": true,
-  "data": {...},
-  "timestamp": "2024-01-29T10:30:00Z"
-}
-```
-
-### Created (201 Created)
-
-```json
-{
-  "success": true,
-  "data": {...},
-  "message": "Resource created successfully",
-  "timestamp": "2024-01-29T10:30:00Z"
-}
-```
-
-### No Content (204)
-
-```
-Empty response
-```
-
-### Error (4xx/5xx)
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable error message",
-    "details": "Additional error details"
-  },
-  "timestamp": "2024-01-29T10:30:00Z"
-}
-```
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/vobiz/application` | JWT | Create Vobiz application |
+| DELETE | `/api/v1/vobiz/application/{application_id}` | JWT | Delete Vobiz application |
+| GET | `/api/v1/vobiz/numbers` | JWT | List available Vobiz numbers |
+| POST | `/api/v1/vobiz/numbers/link` | JWT | Link number to application |
+| DELETE | `/api/v1/vobiz/numbers/unlink` | JWT | Unlink number from application |
 
 ---
 
-## Authentication Headers
+## Voice Server Endpoints
 
-```http
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Type: application/json
-Accept: application/json
-```
+These endpoints are served by `voice_2_voice_server` on port **7860**.
 
----
-
-## Rate Limiting
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1674007200
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| POST | `/outbound/call/` | Trigger outbound call via Vobiz |
+| POST | `/answer` | Vobiz inbound call webhook — returns XML to start streaming |
+| WS | `/agent/{agent_id}` | WebSocket audio stream for Vobiz calls |
+| POST | `/ubona` | Ubona inbound call webhook |
+| WS | `/ubona/stream/{agent_id}` | WebSocket audio stream for Ubona calls |
 
 ---
 
-## Next Steps
+## Backend Health
 
-- **[REST API Details](rest-api.md)** - Complete REST API documentation
-- **[WebSocket API](websocket-api.md)** - Real-time API
-- **[Quick Start](../getting-started/quickstart.md)** - Get started
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | None | MongoDB connectivity check |
+| GET | `/` | None | API root / version info |
+| GET | `/docs` | None | Swagger UI |
+| GET | `/redoc` | None | ReDoc UI |

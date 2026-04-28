@@ -1,83 +1,56 @@
 # REST API Documentation
 
-Complete REST API reference for VoiceERA Backend.
+Complete REST API reference for the VoicEra Backend. All routes are prefixed with `/api/v1`.
+
+For a quick endpoint lookup table, see the **[API Endpoints Reference](endpoints.md)**.
 
 ## Base URL
 
 ```
-http://localhost:8000        # Development
-https://api.yourdomain.com   # Production
+http://localhost:8000/api/v1        # Development
+https://api.yourdomain.com/api/v1   # Production
 ```
 
-## Authentication
+## Authentication Schemes
 
-All protected endpoints require JWT token in the `Authorization` header:
-
-```http
-Authorization: Bearer <jwt_token>
-```
-
-## Response Format
-
-All responses are JSON:
-
-```json
-{
-  "success": true,
-  "data": {...},
-  "error": null,
-  "timestamp": "2024-01-29T10:30:00Z"
-}
-```
-
-Or for errors:
-
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "AUTH_001",
-    "message": "Invalid credentials",
-    "details": "Email not found"
-  },
-  "timestamp": "2024-01-29T10:30:00Z"
-}
-```
+| Scheme | Header | Used for |
+|--------|--------|---------|
+| **JWT Bearer** | `Authorization: Bearer <token>` | Dashboard users |
+| **API Key** | `X-API-Key: <INTERNAL_API_KEY>` | Service-to-service (voice server) |
+| **None** | — | Public endpoints (signup, login, password reset, call-recordings webhook) |
 
 ---
 
-## Authentication Endpoints
+## User Endpoints
 
-### Register User
+### Register
 
 ```http
-POST /auth/register
+POST /api/v1/users/signup
 Content-Type: application/json
 
 {
   "email": "user@example.com",
   "password": "SecurePass123!",
-  "first_name": "John",
-  "last_name": "Doe"
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "org_name": "Acme Corp"
 }
 ```
 
 **Response:** `201 Created`
 ```json
 {
-  "id": "user-uuid",
-  "email": "user@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "created_at": "2024-01-29T10:30:00Z"
+  "status": "success",
+  "message": "User created",
+  "org_id": "org-uuid"
 }
 ```
 
 ### Login
 
 ```http
-POST /auth/login
+POST /api/v1/users/login
 Content-Type: application/json
 
 {
@@ -89,13 +62,11 @@ Content-Type: application/json
 **Response:** `200 OK`
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expires_in": 86400,
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
   "user": {
-    "id": "user-uuid",
     "email": "user@example.com",
-    "role": "user"
+    "org_id": "org-uuid"
   }
 }
 ```
@@ -103,34 +74,37 @@ Content-Type: application/json
 ### Get Current User
 
 ```http
-GET /auth/me
+GET /api/v1/users/me
 Authorization: Bearer <token>
 ```
 
 **Response:** `200 OK`
 ```json
 {
-  "id": "user-uuid",
   "email": "user@example.com",
-  "first_name": "John",
+  "first_name": "Jane",
   "last_name": "Doe",
-  "role": "user",
-  "created_at": "2024-01-29T10:30:00Z"
+  "org_id": "org-uuid",
+  "role": "admin"
 }
 ```
 
-### Refresh Token
+### Password Reset
 
 ```http
-POST /auth/refresh-token
-Authorization: Bearer <refresh_token>
+POST /api/v1/users/forgot-password
+Content-Type: application/json
+
+{ "email": "user@example.com" }
 ```
 
-**Response:** `200 OK`
-```json
+```http
+POST /api/v1/users/reset-password
+Content-Type: application/json
+
 {
-  "token": "new-jwt-token",
-  "expires_in": 86400
+  "token": "reset-token-from-email",
+  "new_password": "NewSecurePass456!"
 }
 ```
 
@@ -138,410 +112,348 @@ Authorization: Bearer <refresh_token>
 
 ## Agent Endpoints
 
-### List Agents
-
-```http
-GET /agents
-Authorization: Bearer <token>
-
-# Optional query parameters:
-# ?skip=0&limit=10
-# ?search=sales
-# ?status=active
-```
-
-**Response:** `200 OK`
-```json
-{
-  "total": 15,
-  "skip": 0,
-  "limit": 10,
-  "items": [
-    {
-      "id": "agent-uuid",
-      "name": "Sales Agent",
-      "description": "Handles sales inquiries",
-      "llm_provider": "openai",
-      "llm_model": "gpt-4",
-      "status": "active",
-      "created_at": "2024-01-29T10:30:00Z"
-    }
-    // ... more agents
-  ]
-}
-```
-
 ### Create Agent
 
 ```http
-POST /agents
+POST /api/v1/agents
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "name": "Support Agent",
-  "description": "Handles customer support",
-  "llm_provider": "openai",
-  "llm_model": "gpt-4",
-  "stt_provider": "deepgram",
-  "tts_provider": "cartesia",
-  "system_prompt": "You are a helpful support agent. Help customers with their issues.",
-  "language": "en",
-  "voice_parameters": {
-    "voice_id": "english_male",
-    "speed": 1.0,
-    "tone": "professional"
+  "agent_type": "sales-agent-v1",
+  "org_id": "org-uuid",
+  "agent_config": {
+    "system_prompt": "You are a helpful sales agent.",
+    "greeting_message": "Hello, how can I help you today?",
+    "session_timeout_minutes": 10,
+    "llm_model": {
+      "name": "OpenAI",
+      "model": "gpt-4o",
+      "temperature": 0.7
+    },
+    "stt_model": {
+      "name": "deepgram",
+      "language": "English",
+      "args": { "model": "nova-3" }
+    },
+    "tts_model": {
+      "name": "cartesia",
+      "language": "English",
+      "args": {
+        "model": "sonic-2",
+        "voice_id": "bf0a246a-8642-498a-9950-80c35e9276b5"
+      }
+    }
   }
 }
 ```
 
-**Response:** `201 Created`
-```json
-{
-  "id": "new-agent-uuid",
-  "name": "Support Agent",
-  "status": "active",
-  "created_at": "2024-01-29T10:30:00Z"
-}
-```
-
-### Get Agent
-
-```http
-GET /agents/{agent_id}
-Authorization: Bearer <token>
-```
-
 **Response:** `200 OK`
 ```json
 {
-  "id": "agent-uuid",
-  "user_id": "user-uuid",
-  "name": "Support Agent",
-  "description": "Handles customer support",
-  "llm_provider": "openai",
-  "llm_model": "gpt-4",
-  "stt_provider": "deepgram",
-  "tts_provider": "cartesia",
-  "system_prompt": "You are a helpful support agent...",
-  "language": "en",
-  "status": "active",
-  "created_at": "2024-01-29T10:30:00Z"
+  "status": "success",
+  "agent_type": "sales-agent-v1",
+  "org_id": "org-uuid"
 }
 ```
 
-### Update Agent
+### List Agents for an Organisation
 
 ```http
-PUT /agents/{agent_id}
+GET /api/v1/agents/org/{org_id}
 Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "Updated Name",
-  "system_prompt": "New system prompt here"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "agent-uuid",
-  "name": "Updated Name",
-  "updated_at": "2024-01-29T10:35:00Z"
-}
-```
-
-### Delete Agent
-
-```http
-DELETE /agents/{agent_id}
-Authorization: Bearer <token>
-```
-
-**Response:** `204 No Content`
-
----
-
-## Campaign Endpoints
-
-### List Campaigns
-
-```http
-GET /campaigns
-Authorization: Bearer <token>
-
-# Optional query parameters:
-# ?agent_id=uuid
-# ?status=active
-# ?skip=0&limit=20
-```
-
-**Response:** `200 OK`
-```json
-{
-  "total": 5,
-  "items": [
-    {
-      "id": "campaign-uuid",
-      "name": "Q1 Sales Campaign",
-      "agent_id": "agent-uuid",
-      "status": "active",
-      "phone_numbers": ["+1234567890"],
-      "start_time": "2024-01-29T00:00:00Z",
-      "end_time": "2024-03-31T23:59:59Z",
-      "created_at": "2024-01-29T10:30:00Z"
-    }
-  ]
-}
-```
-
-### Create Campaign
-
-```http
-POST /campaigns
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "Q2 Marketing Campaign",
-  "agent_id": "agent-uuid",
-  "phone_numbers": ["+1234567890", "+1234567891"],
-  "start_time": "2024-04-01T00:00:00Z",
-  "end_time": "2024-06-30T23:59:59Z",
-  "max_concurrent_calls": 50
-}
-```
-
-**Response:** `201 Created`
-```json
-{
-  "id": "new-campaign-uuid",
-  "status": "draft",
-  "created_at": "2024-01-29T10:30:00Z"
-}
-```
-
-### Launch Campaign
-
-```http
-POST /campaigns/{campaign_id}/launch
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "campaign-uuid",
-  "status": "active",
-  "launched_at": "2024-01-29T10:35:00Z"
-}
-```
-
-### Pause Campaign
-
-```http
-POST /campaigns/{campaign_id}/pause
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "campaign-uuid",
-  "status": "paused",
-  "paused_at": "2024-01-29T10:36:00Z"
-}
-```
-
----
-
-## Call Log Endpoints
-
-### List Call Logs
-
-```http
-GET /call-logs
-Authorization: Bearer <token>
-
-# Optional filters:
-# ?campaign_id=uuid
-# ?status=completed
-# ?phone_number=%2B1234567890
-# ?start_date=2024-01-01
-# ?end_date=2024-01-31
-# ?skip=0&limit=50
-```
-
-**Response:** `200 OK`
-```json
-{
-  "total": 1250,
-  "items": [
-    {
-      "id": "call-uuid",
-      "campaign_id": "campaign-uuid",
-      "phone_number": "+1234567890",
-      "status": "completed",
-      "duration_seconds": 120,
-      "sentiment": "positive",
-      "emotions": ["satisfied"],
-      "transcript": "User: Hello... Agent: Hi...",
-      "created_at": "2024-01-29T10:30:00Z"
-    }
-  ]
-}
-```
-
-### Get Call Details
-
-```http
-GET /call-logs/{call_id}
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "call-uuid",
-  "campaign_id": "campaign-uuid",
-  "phone_number": "+1234567890",
-  "status": "completed",
-  "duration_seconds": 120,
-  "transcript": "Full transcript here...",
-  "summary": "Customer called about billing issue...",
-  "sentiment": "positive",
-  "emotions": ["satisfied", "relieved"],
-  "key_phrases": ["billing", "resolution"],
-  "recording_url": "https://minio:9001/recordings/call-uuid.wav",
-  "cost": 0.50,
-  "created_at": "2024-01-29T10:30:00Z"
-}
-```
-
----
-
-## Recording Endpoints
-
-### Get Recording
-
-```http
-GET /call-recordings/{call_id}
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK`
-```json
-{
-  "call_id": "call-uuid",
-  "duration_seconds": 120,
-  "format": "wav",
-  "size_bytes": 960000,
-  "download_url": "https://signed-url-with-expiry",
-  "transcript": "Full transcript...",
-  "metadata": {
-    "agent_id": "agent-uuid",
-    "campaign_id": "campaign-uuid",
-    "phone_number": "+1234567890"
-  }
-}
-```
-
-### Download Recording
-
-```http
-GET /call-recordings/{call_id}/download
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK` with audio file (WAV format)
-
----
-
-## Analytics Endpoints
-
-### Call Statistics
-
-```http
-GET /analytics/calls
-Authorization: Bearer <token>
-
-# Optional filters:
-# ?agent_id=uuid
-# ?campaign_id=uuid
-# ?days=30
-```
-
-**Response:** `200 OK`
-```json
-{
-  "total_calls": 1250,
-  "completed_calls": 1200,
-  "failed_calls": 50,
-  "average_duration": 180,
-  "success_rate": 96.0,
-  "cost_per_call": 0.45
-}
-```
-
-### Sentiment Analysis
-
-```http
-GET /analytics/sentiment
-Authorization: Bearer <token>
-
-# Optional:
-# ?agent_id=uuid&days=7
-```
-
-**Response:** `200 OK`
-```json
-{
-  "positive": 850,
-  "neutral": 300,
-  "negative": 100,
-  "positive_percentage": 68.0,
-  "neutral_percentage": 24.0,
-  "negative_percentage": 8.0
-}
-```
-
-### Top Phrases
-
-```http
-GET /analytics/top-phrases
-Authorization: Bearer <token>
-
-# Optional:
-# ?agent_id=uuid&limit=20
 ```
 
 **Response:** `200 OK`
 ```json
 [
   {
-    "phrase": "billing issue",
-    "count": 234,
-    "frequency": 18.7
-  },
-  {
-    "phrase": "account access",
-    "count": 156,
-    "frequency": 12.5
-  },
-  {
-    "phrase": "payment problem",
-    "count": 145,
-    "frequency": 11.6
+    "agent_type": "sales-agent-v1",
+    "org_id": "org-uuid",
+    "agent_config": { ... },
+    "created_at": "2026-04-01T10:00:00Z"
   }
 ]
 ```
 
+### Get Agent
+
+```http
+GET /api/v1/agents/{agent_type}
+Authorization: Bearer <token>
+```
+
+### Update Agent
+
+```http
+PUT /api/v1/agents/{agent_type}
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "agent_config": { ... }
+}
+```
+
+### Delete Agent
+
+```http
+DELETE /api/v1/agents/{agent_type}
+Authorization: Bearer <token>
+```
+
+**Response:** `200 OK`
+
+### Get Agent Config (Voice Server)
+
+```http
+GET /api/v1/agents/config/{agent_type}
+X-API-Key: <INTERNAL_API_KEY>
+```
+
+Returns the full agent configuration used by the voice server to initialise a call session.
+
 ---
 
-## Health & Status
+## Campaign Endpoints
 
-### Health Check
+### Create Campaign
+
+```http
+POST /api/v1/campaigns
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "campaign_name": "Q2-Outreach",
+  "org_id": "org-uuid",
+  "agent_type": "sales-agent-v1",
+  "audience_name": "q2-leads",
+  "caller_id": "+911234567890"
+}
+```
+
+### List Campaigns for an Organisation
+
+```http
+GET /api/v1/campaigns/org/{org_id}
+Authorization: Bearer <token>
+```
+
+### Get Campaign
+
+```http
+GET /api/v1/campaigns/{campaign_name}
+Authorization: Bearer <token>
+```
+
+---
+
+## Meetings (Call Logs)
+
+### List Meetings
+
+```http
+GET /api/v1/meetings
+Authorization: Bearer <token>
+
+# Optional query parameter:
+# ?agent_type=sales-agent-v1
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "meeting_id": "CA1234567890",
+    "org_id": "org-uuid",
+    "agent_type": "sales-agent-v1",
+    "phone_number": "+919876543210",
+    "call_type": "outbound",
+    "status": "completed",
+    "duration": 185,
+    "start_time_utc": "2026-04-01T10:00:00Z",
+    "end_time_utc": "2026-04-01T10:03:05Z",
+    "transcript_content": "Agent: Hello... Caller: Hi...",
+    "recording_url": "minio://recordings/CA1234567890.wav"
+  }
+]
+```
+
+### Get Single Meeting
+
+```http
+GET /api/v1/meetings/{meeting_id}
+Authorization: Bearer <token>
+```
+
+### Stream Call Recording
+
+```http
+GET /api/v1/meetings/{meeting_id}/recording
+Authorization: Bearer <token>
+```
+
+Returns the WAV audio stream for the specified call.
+
+---
+
+## Analytics
+
+### Get Call Analytics
+
+```http
+GET /api/v1/analytics
+Authorization: Bearer <token>
+
+# Optional query parameters:
+# ?agent_type=sales-agent-v1
+# ?start_date=2026-04-01T00:00:00Z
+# ?end_date=2026-04-30T23:59:59Z
+# ?phone_number=%2B919876543210
+```
+
+**Response:** `200 OK`
+```json
+{
+  "org_id": "org-uuid",
+  "calls_attempted": 250,
+  "calls_connected": 198,
+  "average_call_duration": 142.5,
+  "total_minutes_connected": 470.25,
+  "most_used_agent": "sales-agent-v1",
+  "most_used_agent_count": 120,
+  "agent_breakdown": [
+    { "agent_type": "sales-agent-v1", "call_count": 120 },
+    { "agent_type": "support-bot", "call_count": 78 }
+  ],
+  "calculated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+---
+
+## Integrations
+
+### Add Integration
+
+```http
+POST /api/v1/integrations
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "model": "openai",
+  "api_key": "sk-...",
+  "org_id": "org-uuid"
+}
+```
+
+### List Integrations
+
+```http
+GET /api/v1/integrations
+Authorization: Bearer <token>
+```
+
+### Delete Integration
+
+```http
+DELETE /api/v1/integrations/{model}
+Authorization: Bearer <token>
+```
+
+### Get Integration Key (Voice Server)
+
+```http
+POST /api/v1/integrations/bot/get-api-key
+X-API-Key: <INTERNAL_API_KEY>
+Content-Type: application/json
+
+{
+  "org_id": "org-uuid",
+  "model": "openai"
+}
+```
+
+**Response:** `200 OK`
+```json
+{ "api_key": "sk-..." }
+```
+
+---
+
+## Knowledge Base
+
+### List Documents
+
+```http
+GET /api/v1/knowledge
+Authorization: Bearer <token>
+```
+
+### Upload PDF
+
+```http
+POST /api/v1/knowledge/upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file=<PDF file>
+org_id=org-uuid
+```
+
+**Response:** `202 Accepted`
+```json
+{
+  "document_id": "doc-uuid",
+  "filename": "product-manual.pdf",
+  "status": "processing"
+}
+```
+
+### Delete Document
+
+```http
+DELETE /api/v1/knowledge/{document_id}
+Authorization: Bearer <token>
+```
+
+---
+
+## RAG Retrieval (Voice Server)
+
+```http
+POST /api/v1/rag/retrieve
+X-API-Key: <INTERNAL_API_KEY>
+Content-Type: application/json
+
+{
+  "org_id": "org-uuid",
+  "question": "What is the return policy?",
+  "top_k": 3,
+  "document_ids": ["doc-uuid"]
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "chunks": [
+    {
+      "chunk_id": "doc-uuid-0",
+      "document_id": "doc-uuid",
+      "source_filename": "product-manual.pdf",
+      "text": "Our return policy allows returns within 30 days...",
+      "distance": 0.21
+    }
+  ]
+}
+```
+
+---
+
+## Health
 
 ```http
 GET /health
@@ -549,68 +461,39 @@ GET /health
 
 **Response:** `200 OK`
 ```json
-{
-  "status": "ok",
-  "timestamp": "2024-01-29T10:30:00Z"
-}
+{ "status": "healthy", "database": "connected" }
 ```
 
-### Readiness
+---
 
-```http
-GET /readiness
-```
+## Error Responses
 
-**Response:** `200 OK`
+All errors return a consistent JSON body:
+
 ```json
 {
-  "database": "ok",
-  "storage": "ok",
-  "cache": "ok"
+  "detail": "Agent not found"
 }
 ```
 
----
+Common HTTP status codes:
 
-## Error Codes
-
-| Code | HTTP | Description |
-|------|------|-------------|
-| AUTH_001 | 401 | Invalid credentials |
-| AUTH_002 | 401 | Token expired |
-| AUTH_003 | 401 | Token invalid |
-| AUTH_004 | 403 | Permission denied |
-| AGENT_001 | 404 | Agent not found |
-| AGENT_002 | 409 | Agent already exists |
-| CAMPAIGN_001 | 404 | Campaign not found |
-| CAMPAIGN_002 | 409 | Cannot launch campaign |
-| CALL_001 | 404 | Call log not found |
-| SERVER_001 | 500 | Internal server error |
-
----
-
-## Rate Limiting
-
-API has rate limiting to prevent abuse:
-
-```
-General endpoints: 100 requests/minute
-Auth endpoints: 10 requests/minute
-Upload endpoints: 10 MB/minute
-```
-
-Rate limit headers:
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1674007200
-```
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 202 | Accepted (async processing started) |
+| 400 | Bad Request |
+| 401 | Unauthorized (invalid or missing token) |
+| 403 | Forbidden |
+| 404 | Not Found |
+| 409 | Conflict |
+| 500 | Internal Server Error |
 
 ---
 
 ## Next Steps
 
-- **[WebSocket API](websocket-api.md)** - Real-time communication
-- **[Quick Start](../getting-started/quickstart.md)** - Get started
-- **[Voice Server API](../services/voice-server.md)** - Voice processing
+- **[API Endpoints Reference](endpoints.md)** — Complete table of all endpoints
+- **[WebSocket API](websocket-api.md)** — Real-time voice communication
+- **[Voice Server Service](../services/voice-server.md)** — Voice processing details

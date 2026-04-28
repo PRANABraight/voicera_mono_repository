@@ -1,251 +1,183 @@
 # Environment Variables Reference
 
-Complete reference for all environment variables used in VoiceERA services.
+Complete reference for all environment variables used in VoicEra services.
 
 ## Table of Contents
 
-1. [Backend Environment](#backend-environment)
-2. [Voice Server Environment](#voice-server-environment)
-3. [Frontend Environment](#frontend-environment)
-4. [AI4Bharat Services](#ai4bharat-services)
-5. [Security & Secrets](#security--secrets)
+1. [Backend (`voicera_backend/.env`)](#backend-environment)
+2. [Voice Server (`voice_2_voice_server/.env`)](#voice-server-environment)
+3. [Frontend (`voicera_frontend/.env.local`)](#frontend-environment)
+4. [AI4Bharat STT Server](#ai4bharat-stt-server)
+5. [AI4Bharat TTS Server](#ai4bharat-tts-server)
 
 ---
 
 ## Backend Environment
 
-### File: `voicera_backend/.env`
+### File: `voicera_backend/.env`  (see `voicera_backend/env.example`)
 
-#### Database Configuration
+#### MongoDB
 
 ```env
-# MongoDB Connection
 MONGODB_HOST=mongodb
 MONGODB_PORT=27017
 MONGODB_USER=admin
 MONGODB_PASSWORD=admin123
 MONGODB_DATABASE=voicera
-
-# Connection Pool
-MONGODB_MAX_POOL_SIZE=50
-MONGODB_TIMEOUT_MS=5000
-MONGODB_SERVER_SELECTION_TIMEOUT_MS=5000
+MONGODB_AUTH_SOURCE=admin
 ```
 
-#### MinIO Configuration
+#### Application
 
 ```env
-# MinIO S3-Compatible Storage
-MINIO_HOST=minio
-MINIO_PORT=9000
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
-MINIO_REGION=us-east-1
-MINIO_SECURE=false          # true for HTTPS in production
-
-# Buckets (auto-created if not exist)
-MINIO_BUCKET_RECORDINGS=recordings
-MINIO_BUCKET_TRANSCRIPTS=transcripts
-MINIO_BUCKET_AGENTS=agent-configs
+DEBUG=false            # true enables uvicorn auto-reload
+SECRET_KEY=            # Required — long random string for JWT signing
 ```
 
-#### JWT & Security
+#### Email (Mailtrap)
 
 ```env
-# JWT Configuration
-JWT_SECRET_KEY=your-secret-key-change-this
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION_HOURS=24
-JWT_REFRESH_EXPIRATION_DAYS=30
-
-# CORS Configuration
-CORS_ORIGINS=["http://localhost:3000","https://yourdomain.com"]
-CORS_ALLOW_CREDENTIALS=true
-CORS_MAX_AGE=3600
+MAILTRAP_API_TOKEN=
+MAILTRAP_FROM_EMAIL=noreply@voicera.com
+MAILTRAP_FROM_NAME=VoicEra
+FRONTEND_URL=http://localhost:3000    # Used in password-reset email links
 ```
 
-#### API Configuration
+#### Internal Service Auth
 
 ```env
-# API Settings
-API_TITLE=VoiceERA API
-API_VERSION=1.0.0
-API_DESCRIPTION=Voice AI Platform with Telephony Integration
-API_DOCS_ENABLED=true            # /docs endpoint
-API_REDOC_ENABLED=true           # /redoc endpoint
-
-# Server
-HOST=0.0.0.0
-PORT=8000
-WORKERS=4
-WORKER_CLASS=uvicorn.workers.UvicornWorker
-RELOAD=false                     # true in development
+INTERNAL_API_KEY=      # Shared secret for voice server → backend calls
 ```
 
-#### Logging
+#### MinIO (Call Recordings Storage)
 
 ```env
-# Logging Configuration
-LOG_LEVEL=INFO                   # DEBUG, INFO, WARNING, ERROR, CRITICAL
-LOG_FORMAT=json                  # json or text
-LOG_FILE=/var/log/voicera/backend.log
-LOG_MAX_BYTES=104857600          # 100MB
-LOG_BACKUP_COUNT=10
+MINIO_ENDPOINT=minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
 ```
 
-#### Email Configuration (Optional)
+#### RAG / Knowledge Base (ChromaDB)
 
 ```env
-# SMTP for email notifications
-SMTP_ENABLED=false
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USE_TLS=true
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@voicera.ai
+# Optional — defaults to voicera_backend/rag_system/chroma_data
+CHROMA_BASE_DIR=/app/rag_system/chroma_data
 ```
+
+#### Vobiz Telephony
+
+```env
+VOBIZ_API_BASE_URL=https://api.vobiz.ai/api/v1
+VOBIZ_ACCOUNT_ID=
+VOBIZ_AUTH_ID=
+VOBIZ_AUTH_TOKEN=
+```
+
+#### Defaults (not in env, set in code)
+
+| Setting | Default | Notes |
+|---------|---------|-------|
+| `API_V1_PREFIX` | `/api/v1` | Hardcoded in `config.py` |
+| Port | `8000` | Set via uvicorn CLI |
 
 ---
 
 ## Voice Server Environment
 
-### File: `voice_2_voice_server/.env`
+### File: `voice_2_voice_server/.env`  (see `.env.example`)
+
+#### Backend Connection
+
+```env
+VOICERA_BACKEND_URL=http://backend:8000
+INTERNAL_API_KEY=      # Must match backend's INTERNAL_API_KEY
+```
 
 #### Vobiz Telephony
 
 ```env
-# Vobiz API Configuration
-VOBIZ_ENABLED=true
+VOBIZ_AUTH_ID=
+VOBIZ_AUTH_TOKEN=
 VOBIZ_API_BASE=https://api.vobiz.ai/api/v1
-VOBIZ_AUTH_ID=your_auth_id
-VOBIZ_AUTH_PASSWORD=your_auth_password
-VOBIZ_WEBHOOK_URL=https://yourdomain.com/vobiz/webhook
+VOBIZ_CALLER_ID=       # Caller ID for outbound calls
+
+# WebSocket URL the voice server advertises to Vobiz for streaming
+JOHNAIC_WEBSOCKET_URL=wss://yourdomain.com
+JOHNAIC_SERVER_URL=https://yourdomain.com
 ```
 
-#### LLM Provider
-
-=== "OpenAI"
-    ```env
-    LLM_PROVIDER=openai
-    OPENAI_API_KEY=sk-your-api-key-here
-    OPENAI_MODEL=gpt-4                  # gpt-4, gpt-3.5-turbo
-    OPENAI_TEMPERATURE=0.7
-    OPENAI_MAX_TOKENS=200
-    OPENAI_TIMEOUT_SECONDS=30
-    ```
-
-=== "Anthropic"
-    ```env
-    LLM_PROVIDER=anthropic
-    ANTHROPIC_API_KEY=sk-ant-...
-    ANTHROPIC_MODEL=claude-3-opus      # claude-3-opus, claude-3-sonnet
-    ANTHROPIC_TEMPERATURE=0.7
-    ```
-
-=== "Local LLM"
-    ```env
-    LLM_PROVIDER=local
-    LOCAL_LLM_API_BASE=http://localhost:8000
-    LOCAL_LLM_MODEL=mistral-7b
-    LOCAL_LLM_TEMPERATURE=0.7
-    ```
-
-#### Speech-to-Text (STT) Provider
-
-=== "Deepgram"
-    ```env
-    STT_PROVIDER=deepgram
-    DEEPGRAM_API_KEY=your-api-key
-    DEEPGRAM_MODEL=nova-2              # nova-2, nova, enhanced
-    DEEPGRAM_LANGUAGE=en
-    DEEPGRAM_ENCODING=linear16
-    DEEPGRAM_SAMPLE_RATE=16000
-    ```
-
-=== "Google Cloud"
-    ```env
-    STT_PROVIDER=google
-    GOOGLE_CLOUD_STT_CREDENTIALS=/path/to/credentials.json
-    GOOGLE_CLOUD_STT_LANGUAGE=en-US
-    ```
-
-=== "AI4Bharat"
-    ```env
-    STT_PROVIDER=ai4bharat
-    STT_SERVICE_URL=http://ai4bharat_stt_server:8001
-    STT_LANGUAGE=hi                    # Language code
-    STT_SAMPLE_RATE=16000
-    ```
-
-#### Text-to-Speech (TTS) Provider
-
-=== "Cartesia"
-    ```env
-    TTS_PROVIDER=cartesia
-    CARTESIA_API_KEY=your-api-key
-    CARTESIA_VOICE=english_male
-    CARTESIA_LANGUAGE=en
-    CARTESIA_SAMPLE_RATE=16000
-    CARTESIA_SPEED=1.0
-    ```
-
-=== "Google Cloud"
-    ```env
-    TTS_PROVIDER=google
-    GOOGLE_CLOUD_TTS_CREDENTIALS=/path/to/credentials.json
-    GOOGLE_CLOUD_TTS_VOICE_NAME=en-US-Neural2-C
-    GOOGLE_CLOUD_TTS_LANGUAGE=en-US
-    ```
-
-=== "AI4Bharat"
-    ```env
-    TTS_PROVIDER=ai4bharat
-    TTS_SERVICE_URL=http://ai4bharat_tts_server:8002
-    TTS_LANGUAGE=hi
-    TTS_SPEAKER=female
-    TTS_SAMPLE_RATE=16000
-    TTS_SPEED=1.0
-    ```
-
-#### Backend Integration
+#### Audio
 
 ```env
-# Backend API Connection
-BACKEND_API_URL=http://backend:8000    # Docker
-# BACKEND_API_URL=http://localhost:8000 # Local dev
-BACKEND_API_TIMEOUT=30
-
-# Session Management
-SESSION_TIMEOUT_MINUTES=30
-MAX_CONCURRENT_CALLS=100
-ENABLE_CALL_RECORDING=true
-ENABLE_TRANSCRIPT_LOGGING=true
+SAMPLE_RATE=16000      # 16000 for Vobiz (L16), 8000 for Ubona (PCMU)
 ```
 
-#### Server Configuration
+#### LLM Providers
 
 ```env
-# Server
-HOST=0.0.0.0
-PORT=7860
-WORKERS=4
+# OpenAI
+OPENAI_API_KEY=sk-...
 
-# Audio
-AUDIO_SAMPLE_RATE=16000
-AUDIO_CHANNELS=1
-AUDIO_FORMAT=pcm
-AUDIO_CHUNK_SIZE=2048
+# Anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Grok / xAI
+XAI_API_KEY=
+GROK_API_KEY=          # Alternative name for xAI key
+
+# Kenpath / Vistaar (custom)
+KENPATH_JWT_PRIVATE_KEY_PATH=/path/to/private_key.pem
+KENPATH_JWT_PHONE=
+KENPATH_VISTAAR_API_URL=https://voice-prod.mahapocra.gov.in
 ```
 
-#### Logging & Debugging
+#### STT Providers
 
 ```env
-# Logging
-LOG_LEVEL=INFO                   # DEBUG, INFO, WARNING, ERROR
-LOG_FILE=/var/log/voicera/voice_server.log
-DEBUG_MODE=false                 # Enable verbose logging
-ENABLE_AUDIO_LOGGING=false       # Log audio streams (CPU intensive!)
+# Deepgram
+DEEPGRAM_API_KEY=
+
+# Google (STT)
+GOOGLE_STT_CREDENTIALS_PATH=/path/to/service-account.json
+
+# ElevenLabs
+ELEVENLABS_API_KEY=
+
+# Sarvam
+SARVAM_API_KEY=
+
+# Bhashini
+BHASHINI_API_KEY=
+BHASHINI_SOCKET_URL=wss://dhruva-api.bhashini.gov.in  # Optional override
+
+# AI4Bharat Indic STT
+INDIC_STT_SERVER_URL=http://ai4bharat_stt_server:8001
+```
+
+#### TTS Providers
+
+```env
+# Cartesia
+CARTESIA_API_KEY=
+
+# Google (TTS)
+GOOGLE_TTS_CREDENTIALS_PATH=/path/to/service-account.json
+
+# Bhashini TTS
+BHASHINI_TTS_SERVER_URL=
+BHASHINI_TTS_AUTH_TOKEN=
+
+# AI4Bharat Indic TTS
+INDIC_TTS_SERVER_URL=http://ai4bharat_tts_server:8002
+```
+
+#### MinIO (for storing recordings)
+
+```env
+MINIO_ENDPOINT=minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_SECURE=false     # true for HTTPS
 ```
 
 ---
@@ -254,200 +186,70 @@ ENABLE_AUDIO_LOGGING=false       # Log audio streams (CPU intensive!)
 
 ### File: `voicera_frontend/.env.local`
 
-#### API Configuration
-
 ```env
-# Backend API
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-NEXT_PUBLIC_API_TIMEOUT=30000              # Milliseconds
+# Backend API base URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# Voice Server WebSocket
-NEXT_PUBLIC_VOICE_SERVER_URL=http://localhost:7860
-NEXT_PUBLIC_WS_URL=ws://localhost:7860
-NEXT_PUBLIC_WS_TIMEOUT=30000
+# Voice server URL (for outbound call API route)
+VOICE_SERVER_URL=http://localhost:7860
+
+# App name shown in the UI
+NEXT_PUBLIC_APP_NAME=VoicEra
 ```
 
-#### Authentication
-
-```env
-# Authentication Settings
-NEXT_PUBLIC_AUTH_ENABLED=true
-NEXT_PUBLIC_JWT_STORAGE_KEY=voicera_token
-NEXT_PUBLIC_AUTH_REDIRECT_URL=/dashboard
-NEXT_PUBLIC_LOGIN_URL=/login
-```
-
-#### Application Configuration
-
-```env
-# App Info
-NEXT_PUBLIC_APP_NAME=VoiceERA
-NEXT_PUBLIC_APP_VERSION=1.0.0
-NEXT_PUBLIC_APP_ENVIRONMENT=development  # development, staging, production
-
-# Logging
-NEXT_PUBLIC_LOG_LEVEL=info                # debug, info, warn, error
-NEXT_PUBLIC_SENTRY_DSN=
-NEXT_PUBLIC_DEBUG=false
-```
-
-#### Analytics & Tracking
-
-```env
-# Analytics
-NEXT_PUBLIC_ANALYTICS_ENABLED=false
-NEXT_PUBLIC_GA_TRACKING_ID=              # Google Analytics ID
-NEXT_PUBLIC_MIXPANEL_TOKEN=              # Mixpanel token
-
-# Feature Flags
-NEXT_PUBLIC_FEATURE_VOICE_CALLS=true
-NEXT_PUBLIC_FEATURE_ANALYTICS=true
-NEXT_PUBLIC_FEATURE_RECORDINGS=true
-```
-
-#### UI Configuration
-
-```env
-# UI Preferences
-NEXT_PUBLIC_THEME=light                  # light, dark, auto
-NEXT_PUBLIC_ANIMATIONS_ENABLED=true
-NEXT_PUBLIC_RECORDS_PER_PAGE=25
-```
+!!! note
+    In Docker Compose these are set to internal service names:
+    `NEXT_PUBLIC_API_URL=http://backend:8000` and `VOICE_SERVER_URL=http://voice_server:7860`.
 
 ---
 
-## AI4Bharat Services
+## AI4Bharat STT Server
 
 ### File: `ai4bharat_stt_server/.env`
 
 ```env
-# Server
-HOST=0.0.0.0
-PORT=8001
-WORKERS=4
-
-# Model Configuration
-MODEL_NAME=indic-conformer-hi
-MODEL_PATH=/models
-DEVICE=cuda                    # cuda or cpu
-BATCH_SIZE=32
-
-# Audio
-SAMPLE_RATE=16000
-AUDIO_FORMAT=wav
-
-# Logging
-LOG_LEVEL=INFO
+HF_TOKEN=              # Optional — for gated Hugging Face models
+PORT=8001              # Documentation only; port is set in uvicorn CLI
 ```
+
+---
+
+## AI4Bharat TTS Server
 
 ### File: `ai4bharat_tts_server/.env`
 
 ```env
-# Server
-HOST=0.0.0.0
-PORT=8002
-WORKERS=2
-
-# Model Configuration
-MODEL_NAME=indic-parler-hi
-MODEL_PATH=/models
-DEVICE=cuda                    # cuda or cpu
-
-# Audio
-SAMPLE_RATE=16000
-AUDIO_FORMAT=wav
-SPEED=1.0
-
-# Caching
-ENABLE_CACHING=true
-CACHE_SIZE_MB=500
-CACHE_TTL_HOURS=24
-
-# Logging
-LOG_LEVEL=INFO
+HF_TOKEN=              # Optional — consumed in server.py for from_pretrained()
+PORT=8002              # Documentation only; port is set in uvicorn CLI
 ```
 
 ---
 
-## Security & Secrets
+## Docker Compose defaults
 
-### Secret Management Best Practices
+The root `docker-compose.yml` sets these automatically when you run `docker compose up`:
 
-```bash
-# Never commit secrets
-echo ".env" >> .gitignore
-echo ".env.prod" >> .gitignore
-echo "secrets/" >> .gitignore
-
-# Store secrets in environment variables
-export MONGODB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id prod/mongodb/password)
-export JWT_SECRET_KEY=$(aws secretsmanager get-secret-value --secret-id prod/jwt-secret)
-
-# Or use a secrets management tool
-# HashiCorp Vault, AWS Secrets Manager, GCP Secret Manager
-```
-
-### Secret Rotation
-
-```bash
-# Rotate JWT secret
-# 1. Generate new secret
-NEW_SECRET=$(openssl rand -hex 32)
-
-# 2. Update in environment
-JWT_SECRET_KEY=$NEW_SECRET
-
-# 3. Rotate tokens after grace period
-# 4. Monitor for authentication failures
-```
-
-### Environment by Stage
-
-**Development:**
-```env
-DEBUG=true
-LOG_LEVEL=DEBUG
-MONGODB_SECURE=false
-MINIO_SECURE=false
-JWT_EXPIRATION_HOURS=24
-```
-
-**Staging:**
-```env
-DEBUG=false
-LOG_LEVEL=INFO
-MONGODB_SECURE=true
-MINIO_SECURE=true
-JWT_EXPIRATION_HOURS=12
-```
-
-**Production:**
-```env
-DEBUG=false
-LOG_LEVEL=WARNING
-MONGODB_SECURE=true
-MINIO_SECURE=true
-JWT_EXPIRATION_HOURS=1
-SESSION_TIMEOUT_MINUTES=15
-```
+| Variable | Value | Service |
+|----------|-------|---------|
+| `MONGODB_HOST` | `mongodb` | backend |
+| `NEXT_PUBLIC_API_URL` | `http://backend:8000` | frontend |
+| `VOICE_SERVER_URL` | `http://voice_server:7860` | frontend |
+| `VOICERA_BACKEND_URL` | `http://backend:8000` | voice_server |
+| `MINIO_ENDPOINT` | `minio:9000` | voice_server |
+| `MINIO_ACCESS_KEY` | `minioadmin` | voice_server |
+| `MINIO_SECRET_KEY` | `minioadmin` | voice_server |
+| `MINIO_SECURE` | `false` | voice_server |
 
 ---
 
-## Validation Checklist
+## Minimal production checklist
 
-- [ ] All required variables set
-- [ ] No secrets in .env.example
-- [ ] API keys rotated regularly
-- [ ] Passwords meet security requirements (16+ chars, mixed case, numbers, symbols)
-- [ ] URLs use HTTPS in production
-- [ ] Timeout values are reasonable
-- [ ] Rate limits are set appropriately
-- [ ] Logging doesn't expose sensitive data
-
----
-
-## Next Steps
-
-- **[Configuration Guide](../getting-started/configuration.md)** - Detailed configuration
-- **[Quick Start](../getting-started/quickstart.md)** - Get running
-- **[Production Deployment](production.md)** - Production setup
+| Variable | Service | Why it must be set |
+|----------|---------|-------------------|
+| `SECRET_KEY` | backend | JWT signing — leave blank → tokens rejected |
+| `INTERNAL_API_KEY` | backend + voice_server | Service-to-service auth |
+| `MONGODB_PASSWORD` | backend | Change default `admin123` |
+| `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` | backend + voice_server | Change default `minioadmin` |
+| `OPENAI_API_KEY` (or Integration) | voice_server | Required for OpenAI LLM and KB embeddings |
+| `JOHNAIC_WEBSOCKET_URL` | voice_server | Publicly reachable URL Vobiz calls back to |
+| `MAILTRAP_API_TOKEN` | backend | Required for password-reset emails |
