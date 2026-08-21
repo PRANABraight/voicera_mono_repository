@@ -1,0 +1,135 @@
+version: '3.8'
+
+# Quick-start compose file for pre-built images published to ghcr.io.
+# Distinct from the dev docker-compose.yml (which builds from local source) —
+# this file is served to end users via setup-docker.sh and saved locally as
+# `docker-compose.yaml`. All secrets/config come from a root .env, generated
+# by scripts/start_docker.sh.
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: voicera_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: voicera
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      voicera_network:
+        aliases:
+          - mongodb
+    command: mongod --bind_ip_all
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: ${REGISTRY:-ghcr.io/coss-india}/voicera-backend:${TAG:-latest}
+    container_name: voicera_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_USER: ${MONGO_ROOT_USER:-admin}
+      MONGODB_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
+      MONGODB_DATABASE: voicera
+      MONGODB_AUTH_SOURCE: admin
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      MAILTRAP_API_TOKEN: placeholder
+      MAILTRAP_FROM_EMAIL: noreply@voicera.com
+      MAILTRAP_FROM_NAME: Voicera
+      FRONTEND_URL: ${JOHNAIC_SERVER_URL:-http://localhost:3000}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      VOBIZ_API_BASE_URL: https://api.vobiz.in/v1
+      VOBIZ_AUTH_ID: ${VOBIZ_AUTH_ID:-PLACEHOLDER}
+      VOBIZ_AUTH_TOKEN: ${VOBIZ_AUTH_TOKEN:-PLACEHOLDER}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - voicera_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: voicera_minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    networks:
+      - voicera_network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io/coss-india}/voicera-frontend:${TAG:-latest}
+    container_name: voicera_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      API_URL: http://backend:8000
+      VOICE_SERVER_URL: http://voice_server:7860
+    networks:
+      - voicera_network
+    depends_on:
+      - backend
+
+  voice_server:
+    image: ${REGISTRY:-ghcr.io/coss-india}/voicera-voice-server:${TAG:-latest}
+    container_name: voicera_voice_server
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    environment:
+      VOICERA_BACKEND_URL: http://backend:8000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_SECURE: "false"
+      VOBIZ_AUTH_ID: ${VOBIZ_AUTH_ID:-PLACEHOLDER}
+      VOBIZ_AUTH_TOKEN: ${VOBIZ_AUTH_TOKEN:-PLACEHOLDER}
+      VOBIZ_API_BASE: https://api.vobiz.in/v1
+      JOHNAIC_SERVER_URL: ${JOHNAIC_SERVER_URL:-http://localhost:3000}
+    networks:
+      - voicera_network
+    depends_on:
+      - backend
+      - minio
+
+volumes:
+  mongodb_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  voicera_network:
+    driver: bridge

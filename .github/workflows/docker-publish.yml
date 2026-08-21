@@ -1,0 +1,74 @@
+name: Publish Docker images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "voicera_backend/**"
+      - "voicera_frontend/**"
+      - "voice_2_voice_server/**"
+      - ".github/workflows/docker-publish.yml"
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ghcr.io
+  ORG: coss-india
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: voicera-backend
+            context: voicera_backend
+          - name: voicera-voice-server
+            context: voice_2_voice_server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/${{ matrix.name }}:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/${{ matrix.name }}:${{ github.sha }}
+
+  publish-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Next.js bakes NEXT_PUBLIC_* into the JS bundle at build time
+      # (voicera_frontend/Dockerfile expects a `frontend_env` build secret).
+      # Ship a safe relative-path default; self-hosters needing a custom
+      # public voice URL should build the frontend image themselves.
+      - name: Write default frontend build secret
+        run: echo "NEXT_PUBLIC_JOHNAIC_SERVER_URL=" > /tmp/frontend_env
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: voicera_frontend
+          push: true
+          secrets: |
+            frontend_env=/tmp/frontend_env
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/voicera-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/voicera-frontend:${{ github.sha }}
