@@ -50,6 +50,37 @@ A complete voice AI building block with telephony integration, featuring real-ti
 
 ## Quick Start
 
+### Fastest Path: One Command (Linux, macOS, Windows)
+
+Docker is the only prerequisite. The same command works in bash, zsh, PowerShell, and cmd — no download, no shell script:
+
+```
+docker compose -f oci://ghcr.io/pranabraight/voicera-compose:latest up -d
+```
+
+The compose file is pulled straight from the registry as an OCI artifact, and the images come prebuilt for `linux/amd64` and `linux/arm64` (Apple Silicon included). Then open http://localhost:3000.
+
+Useful follow-ups (same `-f` flag each time):
+
+```
+docker compose -f oci://ghcr.io/pranabraight/voicera-compose:latest logs -f
+docker compose -f oci://ghcr.io/pranabraight/voicera-compose:latest down
+```
+
+Requires Docker Compose v2.32+ for `oci://` support (`docker compose version` to check). On older versions, use the script path below instead.
+
+> **Local evaluation only.** This path ships placeholder secrets (`SECRET_KEY`, `INTERNAL_API_KEY`) and default MongoDB/MinIO credentials, so those ports are bound to `127.0.0.1`. For anything beyond a local trial, override the secrets via your environment or use the setup script below, which generates random ones.
+
+### Alternative: setup script (generates real secrets)
+
+Linux/macOS, needs `bash` + `curl`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/PRANABraight/voicera_mono_repository/main/setup-docker.sh | bash
+```
+
+Downloads the compose file, generates random secrets into a local `.env` (idempotent — safe to re-run), then starts the stack. Neither Docker path gives you live-reload or source mounts; for development, use the manual steps below.
+
 ### Prerequisites
 
 - Docker & Docker Compose

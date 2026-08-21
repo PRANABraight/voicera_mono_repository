@@ -9,8 +9,10 @@ services:
     image: mongo:latest
     container_name: voicera_mongodb
     restart: unless-stopped
+    # Datastores bind to loopback only — the quickstart ships default
+    # credentials, so they must not be reachable off-host.
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
@@ -43,9 +45,13 @@ services:
       MONGODB_DATABASE: voicera
       MONGODB_AUTH_SOURCE: admin
       DEBUG: "False"
-      SECRET_KEY: ${SECRET_KEY}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
-      MAILTRAP_API_TOKEN: placeholder
+      # Defaults let the one-command quickstart run with no setup script.
+      # They are deliberately obvious placeholders: scripts/start_docker.sh
+      # generates real random secrets, and any non-local deployment MUST
+      # override these.
+      SECRET_KEY: ${SECRET_KEY:-CHANGEME-local-dev-only}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-CHANGEME-local-dev-only}
+      MAILTRAP_API_TOKEN: ${MAILTRAP_API_TOKEN:-placeholder}
       MAILTRAP_FROM_EMAIL: noreply@voicera.com
       MAILTRAP_FROM_NAME: Voicera
       FRONTEND_URL: ${JOHNAIC_SERVER_URL:-http://localhost:3000}
@@ -68,8 +74,8 @@ services:
     container_name: voicera_minio
     restart: unless-stopped
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
@@ -107,7 +113,7 @@ services:
       - "7860:7860"
     environment:
       VOICERA_BACKEND_URL: http://backend:8000
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-CHANGEME-local-dev-only}
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}

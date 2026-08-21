@@ -36,6 +36,8 @@ jobs:
         id: owner
         run: echo "lower=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
+      - uses: docker/setup-qemu-action@v3
+
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
@@ -48,6 +50,10 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: true
+          # ponytail: arm64 built via QEMU emulation — slow (compiles gcc/pip
+          # deps under emulation). Switch to native ubuntu-24.04-arm runners +
+          # manifest merge if build times become a problem.
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.lower }}/${{ matrix.name }}:latest
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.lower }}/${{ matrix.name }}:${{ github.sha }}
@@ -60,6 +66,8 @@ jobs:
       - name: Compute lowercase image owner
         id: owner
         run: echo "lower=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
 
       - uses: docker/setup-buildx-action@v3
 
@@ -80,8 +88,35 @@ jobs:
         with:
           context: voicera_frontend
           push: true
+          platforms: linux/amd64,linux/arm64
           secrets: |
             frontend_env=/tmp/frontend_env
           tags: |
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.lower }}/voicera-frontend:latest
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.lower }}/voicera-frontend:${{ github.sha }}
+
+  # Publishes the compose file itself as an OCI artifact, so the quickstart is
+  # a single OS-agnostic command with no download step:
+  #   docker compose -f oci://ghcr.io/<owner>/voicera-compose:latest up -d
+  # `${VAR}` interpolations stay symbolic in the artifact — they resolve on the
+  # user's machine, so their env/.env still overrides the defaults.
+  publish-compose:
+    runs-on: ubuntu-latest
+    needs: [publish, publish-frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute lowercase image owner
+        id: owner
+        run: echo "lower=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish compose OCI artifact
+        run: |
+          docker compose -f docker-compose.ghcr.yaml publish -y \
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.lower }}/voicera-compose:latest
