@@ -55,8 +55,10 @@ A complete voice AI building block with telephony integration, featuring real-ti
 Docker is the only prerequisite. The same command works in bash, zsh, PowerShell, and cmd — no download, no shell script:
 
 ```
-docker compose -f oci://ghcr.io/pranabraight/voicera-compose:latest up -d
+docker compose -f oci://ghcr.io/pranabraight/voicera-compose:latest up -d -y
 ```
+
+The `-y` accepts the variable summary Compose prints for OCI-sourced files; without it the command stops at a prompt (and cancels outright when piped or run in CI).
 
 The compose file is pulled straight from the registry as an OCI artifact, and the images come prebuilt for `linux/amd64` and `linux/arm64` (Apple Silicon included). Then open http://localhost:3000.
 
