@@ -13,7 +13,7 @@
 set -e
 
 ENV_FILE=".env"
-REGISTRY="${REGISTRY:-ghcr.io/coss-india}"
+REGISTRY="${REGISTRY:-ghcr.io/pranabraight}"
 TAG="${TAG:-latest}"
 
 fail() {

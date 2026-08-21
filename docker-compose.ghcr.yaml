@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Quick-start compose file for pre-built images published to ghcr.io.
 # Distinct from the dev docker-compose.yml (which builds from local source) —
 # this file is served to end users via setup-docker.sh and saved locally as
@@ -32,7 +30,7 @@ services:
       start_period: 10s
 
   backend:
-    image: ${REGISTRY:-ghcr.io/coss-india}/voicera-backend:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/pranabraight}/voicera-backend:${TAG:-latest}
     container_name: voicera_backend
     restart: unless-stopped
     ports:
@@ -87,7 +85,7 @@ services:
       retries: 3
 
   frontend:
-    image: ${REGISTRY:-ghcr.io/coss-india}/voicera-frontend:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/pranabraight}/voicera-frontend:${TAG:-latest}
     container_name: voicera_frontend
     restart: unless-stopped
     ports:
@@ -102,7 +100,7 @@ services:
       - backend
 
   voice_server:
-    image: ${REGISTRY:-ghcr.io/coss-india}/voicera-voice-server:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/pranabraight}/voicera-voice-server:${TAG:-latest}
     container_name: voicera_voice_server
     restart: unless-stopped
     ports:
