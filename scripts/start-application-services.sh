@@ -118,7 +118,7 @@ fi
 
 echo ""
 echo "This will run:"
-echo "  docker compose -f docker-compose.yaml up --build -d"
+echo "  docker compose up --build -d"
 echo ""
 api_port="$(dotenv_value API_HOST_PORT || true)"
 api_port="${api_port:-8000}"
@@ -155,11 +155,13 @@ else
 fi
 
 # Detached by default so the script returns after containers are up.
-# Pass extra compose args after -- if needed, e.g. ./scripts/start_docker.sh -- --no-build
-docker compose -f docker-compose.yaml up --build -d "$@"
+# Bare invocation (no -f) so Compose auto-loads docker-compose.override.yaml
+# for local dev (build + hot-reload). Pass extra compose args after -- if
+# needed, e.g. ./scripts/start_docker.sh -- --no-build
+docker compose up --build -d "$@"
 
 echo ""
 echo "Voicera is starting in the background."
-echo "  Status:  docker compose -f docker-compose.yaml ps"
-echo "  Logs:    docker compose -f docker-compose.yaml logs -f api runtime frontend"
+echo "  Status:  docker compose ps"
+echo "  Logs:    docker compose logs -f api runtime frontend"
 echo "  Stop:    ./scripts/stop-application-services.sh"

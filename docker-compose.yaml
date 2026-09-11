@@ -55,9 +55,7 @@ services:
         condition: service_healthy
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: ${IMAGE_NAMESPACE:-ghcr.io/pranabraight}/voicera-api:${VOICERA_VERSION:-latest}
     container_name: voicera_oss_api
     restart: unless-stopped
     ports:
@@ -101,13 +99,10 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./apps/api:/app
-      - ./apps:/app/apps:ro
       - voicera_oss_chroma_data:/app/app/rag/chroma_data
-    working_dir: /app
     networks:
       - app-network
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   minio:
     image: minio/minio:latest
@@ -176,9 +171,7 @@ services:
       start_period: 5s
 
   arq-worker:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: ${IMAGE_NAMESPACE:-ghcr.io/pranabraight}/voicera-api:${VOICERA_VERSION:-latest}
     container_name: voicera_oss_arq_worker
     restart: unless-stopped
     env_file:
@@ -211,18 +204,12 @@ services:
         condition: service_healthy
       api:
         condition: service_started
-    volumes:
-      - ./apps/api:/app
-      - ./apps:/app/apps:ro
-    working_dir: /app
     networks:
       - app-network
     command: python -m arq app.tasks.arq.WorkerSettings
 
   campaign-orchestrator:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: ${IMAGE_NAMESPACE:-ghcr.io/pranabraight}/voicera-api:${VOICERA_VERSION:-latest}
     container_name: voicera_oss_campaign_orchestrator
     restart: unless-stopped
     env_file:
@@ -246,18 +233,12 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
-    volumes:
-      - ./apps/api:/app
-      - ./apps:/app/apps:ro
-    working_dir: /app
     networks:
       - app-network
     command: python -m app.services.campaign.campaign_orchestrator
 
   runtime:
-    build:
-      context: .
-      dockerfile: apps/runtime/Dockerfile
+    image: ${IMAGE_NAMESPACE:-ghcr.io/pranabraight}/voicera-runtime:${VOICERA_VERSION:-latest}
     container_name: voicera_oss_runtime
     restart: unless-stopped
     ports:
@@ -286,12 +267,7 @@ services:
       - app-network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api/v1}"
-
+    image: ${IMAGE_NAMESPACE:-ghcr.io/pranabraight}/voicera-frontend:${VOICERA_VERSION:-latest}
     container_name: voicera_oss_frontend
     restart: unless-stopped
 

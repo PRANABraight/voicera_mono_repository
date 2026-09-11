@@ -1,0 +1,47 @@
+# Dev-only overrides — auto-loaded by `docker compose` when run bare
+# (no -f flags) from a full checkout. Restores local builds + hot-reload
+# on top of docker-compose.yaml's production image: baseline.
+#
+# install.sh never fetches this file, so a fresh install always gets
+# the prod baseline from docker-compose.yaml alone.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    volumes:
+      - ./apps/api:/app
+      - ./apps:/app/apps:ro
+    working_dir: /app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  arq-worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    volumes:
+      - ./apps/api:/app
+      - ./apps:/app/apps:ro
+    working_dir: /app
+
+  campaign-orchestrator:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    volumes:
+      - ./apps/api:/app
+      - ./apps:/app/apps:ro
+    working_dir: /app
+
+  runtime:
+    build:
+      context: .
+      dockerfile: apps/runtime/Dockerfile
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api/v1}"
