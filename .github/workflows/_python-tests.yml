@@ -1,0 +1,81 @@
+name: Python service tests (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+      python-version:
+        required: false
+        type: string
+        default: "3.11"
+      working-directory:
+        required: false
+        type: string
+        default: "."
+      requirements-files:
+        description: Space-separated requirements files, relative to the repo root
+        required: true
+        type: string
+      test-path:
+        description: pytest target, relative to working-directory
+        required: true
+        type: string
+      cov-source:
+        description: Space-separated --cov targets, relative to working-directory
+        required: true
+        type: string
+      cov-fail-under:
+        required: false
+        type: number
+        default: 95
+      pytest-args:
+        description: Extra pytest args, e.g. --ignore=... for GPU-only test files
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  test:
+    name: ${{ inputs.service-name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+          # ponytail: space-separated requirements-files isn't a valid glob
+          # list here, so multi-file services (providers/telephony) may miss
+          # the pip cache. Switch to a multiline `cache-dependency-path` per
+          # caller if that shows up as a real slowdown.
+          cache-dependency-path: ${{ inputs.requirements-files }}
+
+      - name: Install dependencies
+        run: |
+          for req in ${{ inputs.requirements-files }}; do
+            pip install -r "$req"
+          done
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests with coverage
+        run: |
+          COV_ARGS=""
+          for src in ${{ inputs.cov-source }}; do
+            COV_ARGS="$COV_ARGS --cov=$src"
+          done
+          python -m pytest ${{ inputs.test-path }} ${{ inputs.pytest-args }} $COV_ARGS \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=${{ inputs.cov-fail-under }}
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          echo "### Coverage — ${{ inputs.service-name }}" >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
