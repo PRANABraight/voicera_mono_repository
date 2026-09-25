@@ -1,0 +1,140 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      runtime: ${{ steps.filter.outputs.runtime }}
+      providers: ${{ steps.filter.outputs.providers }}
+      telephony: ${{ steps.filter.outputs.telephony }}
+      model_server: ${{ steps.filter.outputs.model_server }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+            runtime:
+              - 'apps/runtime/**'
+            providers:
+              - 'apps/providers/**'
+              - 'apps/api/requirements.txt'
+              - 'apps/runtime/requirements.txt'
+            telephony:
+              - 'apps/telephony/**'
+              - 'apps/api/requirements.txt'
+              - 'apps/runtime/requirements.txt'
+            model_server:
+              - 'model-server/gateway/**'
+              - 'model-server/tests/**'
+            frontend:
+              - 'frontend/**'
+
+  api-tests:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    uses: ./.github/workflows/_python-tests.yml
+    with:
+      service-name: api
+      python-version: "3.11"
+      requirements-files: apps/api/requirements.txt
+      test-path: apps/api/tests
+      cov-source: apps/api/app
+      # Baseline measured locally on 2026-09-25 (~52%). Ratchet toward 95 as
+      # tests are added — see CI plan doc.
+      cov-fail-under: 50
+
+  runtime-tests:
+    needs: changes
+    if: needs.changes.outputs.runtime == 'true'
+    uses: ./.github/workflows/_python-tests.yml
+    with:
+      service-name: runtime
+      python-version: "3.11"
+      requirements-files: apps/runtime/requirements.txt
+      test-path: apps/runtime/tests
+      cov-source: apps/runtime
+      # Baseline measured locally on 2026-09-25 (~48%). Ratchet toward 95.
+      cov-fail-under: 47
+
+  providers-tests:
+    needs: changes
+    if: needs.changes.outputs.providers == 'true'
+    uses: ./.github/workflows/_python-tests.yml
+    with:
+      service-name: providers
+      python-version: "3.11"
+      requirements-files: apps/api/requirements.txt apps/runtime/requirements.txt
+      test-path: apps/providers/tests
+      cov-source: apps/providers
+      # Baseline measured locally on 2026-09-25 (~53%). Ratchet toward 95.
+      cov-fail-under: 52
+
+  telephony-tests:
+    needs: changes
+    if: needs.changes.outputs.telephony == 'true'
+    uses: ./.github/workflows/_python-tests.yml
+    with:
+      service-name: telephony
+      python-version: "3.11"
+      requirements-files: apps/api/requirements.txt apps/runtime/requirements.txt
+      test-path: apps/telephony/tests
+      cov-source: apps/telephony
+      # Baseline measured locally on 2026-09-25 (~90%), closest to target already.
+      cov-fail-under: 89
+
+  model-server-tests:
+    needs: changes
+    if: needs.changes.outputs.model_server == 'true'
+    uses: ./.github/workflows/_python-tests.yml
+    with:
+      service-name: model-server-gateway
+      python-version: "3.12"
+      working-directory: model-server
+      requirements-files: tests/requirements-dev.txt gateway/requirements.txt
+      test-path: tests
+      # Only gateway/app runs without GPU hardware (tests/conftest.py stubs the
+      # rest of the model stack); llm/stt/tts source trees need real GPU
+      # models and are out of scope for hosted-runner CI.
+      cov-source: gateway/app
+      # Baseline measured locally on 2026-09-25 (~86%), closest to target already.
+      cov-fail-under: 85
+      # These two files exercise stt/indic-conformer's realtime server, whose
+      # requirements.txt pins onnxruntime-gpu (GPU-only wheel, no CI runner
+      # coverage) — same "needs real GPU stack" bucket as bench/smoke_gpu.py.
+      pytest-args: --ignore=tests/test_indic_conformer_realtime.py --ignore=tests/test_realtime_commit_race.py
+
+  frontend-tests:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Run tests with coverage (soft gate)
+        run: npx vitest run --coverage
+      # NOTE: no coverage threshold enforced yet — frontend has ~3 test files
+      # today. Ratchet coverage.thresholds in vitest.config.ts up to 95 once
+      # the suite is built out; see the CI plan doc for the ramp.
