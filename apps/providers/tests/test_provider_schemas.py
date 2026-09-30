@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import copy
 from typing import get_args
 
 import pytest
+from pydantic import BaseModel, Field
 
 from apps.providers import Kind, LANGUAGES, ProviderType, language_schema_extra
 from apps.providers.capabilities import languages_map
@@ -523,6 +525,14 @@ def test_indic_orpheus_tts_registered(monkeypatch):
     assert svc._style == DEFAULT_TTS_STYLE
 
 
+def test_indic_orpheus_resolve_base_url_requires_env(monkeypatch):
+    from apps.providers.local.indic_orpheus.catalog import resolve_base_url
+
+    monkeypatch.delenv("MODEL_SERVER_URL", raising=False)
+    with pytest.raises(RuntimeError, match="MODEL_SERVER_URL is required"):
+        resolve_base_url()
+
+
 def test_indic_nemotron_stt_registered(monkeypatch):
     from apps.providers.capabilities import model_ids
     from apps.providers.local.indic_nemotron.catalog import (
@@ -555,6 +565,23 @@ def test_indic_nemotron_stt_registered(monkeypatch):
     assert resolve_wire_language("indic-nemotron-600m", "od") == "or"
     assert resolve_wire_language("indic-nemotron-600m", "bh") == "bhb"
     assert resolve_ws_url() == "ws://host.docker.internal:8100/v1/asr/ws"
+
+
+def test_indic_nemotron_resolve_wire_language_fallbacks():
+    from apps.providers.local.indic_nemotron.catalog import resolve_wire_language
+
+    # Unknown model: entry lookup misses entirely -> canonical id passed through.
+    assert resolve_wire_language("not-a-real-model", "hi") == "hi"
+    # Known model, but a canonical id with no matching vendor code in the map.
+    assert resolve_wire_language("indic-nemotron-600m", "not-a-real-lang") == "not-a-real-lang"
+
+
+def test_indic_nemotron_resolve_ws_url_requires_env(monkeypatch):
+    from apps.providers.local.indic_nemotron.catalog import resolve_ws_url
+
+    monkeypatch.delenv("MODEL_SERVER_WS_URL", raising=False)
+    with pytest.raises(RuntimeError, match="MODEL_SERVER_WS_URL is required"):
+        resolve_ws_url()
 
 
 def test_indic_nemotron_stt_creator(monkeypatch):
@@ -642,6 +669,18 @@ def test_deepgram_creator_is_registered():
     # Type hint on the registered function points at this vendor config.
     hints = STT_CREATORS["deepgram"].__annotations__
     assert hints.get("cfg") in (DeepgramSTTConfig, "DeepgramSTTConfig") or True
+
+
+def test_languages_label_ids_and_canonical_copy():
+    from apps.providers.languages import canonical_languages, ids, label
+
+    assert label("hi") == LANGUAGES["hi"]
+    assert label("not-a-real-id") == "not-a-real-id"
+    assert "hi" in ids()
+    copy_map = canonical_languages()
+    assert copy_map == dict(LANGUAGES)
+    copy_map["hi"] = "mutated"
+    assert LANGUAGES["hi"] != "mutated"
 
 
 def test_parse_language_ids_rejects_unknown():
@@ -811,3 +850,192 @@ def test_provider_level_auth_openai_and_google_merge():
 
     assert provider_level_auth("missing") is None
     assert "openai" in all_provider_level_auth()
+
+
+# --- Private helper edge cases exercised directly ---
+
+
+def test_union_variants_error_branches():
+    from apps.providers.schema import _union_variants
+
+    with pytest.raises(TypeError, match="Expected Annotated union"):
+        _union_variants(int)  # get_args(int) == () -> no args
+
+    with pytest.raises(TypeError, match="Expected Union members"):
+        # Annotated-shaped but the "union" arg has no Union members of its own.
+        _union_variants(list[int])
+
+
+def test_provider_id_error_branches():
+    class NoProviderField(BaseModel):
+        name: str = "x"
+
+    with pytest.raises(ValueError, match="has no 'provider' field"):
+        _provider_id(NoProviderField)
+
+    class NoDefaultProvider(BaseModel):
+        provider: str
+
+    with pytest.raises(ValueError, match="has no default discriminator value"):
+        _provider_id(NoDefaultProvider)
+
+
+def test_display_name_error_branches():
+    from apps.providers.schema import _display_name
+
+    class NoNameField(BaseModel):
+        provider: str = "x"
+
+    with pytest.raises(ValueError, match="has no 'name' field"):
+        _display_name(NoNameField)
+
+    class NoDefaultName(BaseModel):
+        name: str
+
+    with pytest.raises(ValueError, match="has no default display value"):
+        _display_name(NoDefaultName)
+
+
+def test_provider_type_unresolvable_module_raises():
+    from apps.providers.schema import _provider_type
+
+    class NotUnderAnyRoot(BaseModel):
+        provider: str = "x"
+
+    with pytest.raises(ValueError, match="Cannot derive provider_type"):
+        _provider_type(NotUnderAnyRoot)
+
+
+def test_type_label_dict_and_literal():
+    from typing import Literal
+
+    from apps.providers.schema import _type_label
+
+    assert _type_label(None) == "any"
+    assert _type_label(Literal["a", "b"]) == "string"
+    assert _type_label(dict[str, int]) == "dict[string, integer]"
+    assert _type_label(tuple[int, str]) == "tuple"
+    assert _type_label(type(None)) == "null"
+
+    class Weird:
+        pass
+
+    instance = Weird()
+    assert _type_label(instance) == str(instance)
+
+
+def test_field_catalog_enum_default_unwraps_value():
+    from enum import Enum
+
+    from apps.providers.schema import _config_catalog
+
+    class PlainEnum(Enum):
+        FOO = "foo"
+
+    class WithEnumDefault(BaseModel):
+        provider: str = "enum_default_test"
+        name: str = "EnumDefaultTest"
+        kind_field: PlainEnum = Field(default=PlainEnum.FOO)
+
+    # _provider_type requires a recognized module path; monkeypatch is
+    # overkill here since schema construction only needs model_fields, so
+    # call _field_catalog directly to isolate the default-unwrap branch.
+    from apps.providers.schema import _field_catalog
+
+    entry = _field_catalog(
+        "kind_field", WithEnumDefault.model_fields["kind_field"]
+    )
+    assert entry["default"] == "foo"
+
+
+def test_unsupported_kind_config_class():
+    from apps.providers.schema import _config_class
+
+    with pytest.raises(ValueError, match="Unsupported kind"):
+        _config_class("not-a-kind", "deepgram")  # type: ignore[arg-type]
+
+
+def test_matching_models_no_language_map():
+    from apps.providers.schema import _matching_models
+
+    assert _matching_models({"fields": {}}, ("hi",)) is None
+    assert (
+        _matching_models(
+            {"fields": {"language": {"model_options": {}}}}, ("hi",)
+        )
+        is None
+    )
+
+
+def test_filter_catalog_by_languages_no_languages_returns_deep_copy():
+    from apps.providers.schema import filter_catalog_by_languages
+
+    catalog = provider_schemas(Kind.STT)["deepgram"]
+    copied = filter_catalog_by_languages(catalog, None)
+    assert copied == catalog
+    assert copied is not catalog
+
+
+def test_filter_catalog_model_examples_fallback_to_matched():
+    from apps.providers.schema import filter_catalog_by_languages
+
+    catalog = provider_schemas(Kind.STT)["deepgram"]
+    # Force the "no pre-existing examples" branch by clearing them first.
+    catalog = copy.deepcopy(catalog)
+    catalog["fields"]["model"]["examples"] = []
+    filtered = filter_catalog_by_languages(catalog, "hi")
+    assert filtered is not None
+    assert filtered["fields"]["model"]["examples"]
+
+
+def test_filter_catalog_model_examples_emptied_by_filter_falls_back():
+    from apps.providers.schema import filter_catalog_by_languages
+
+    catalog = provider_schemas(Kind.STT)["deepgram"]
+    catalog = copy.deepcopy(catalog)
+    # Pre-existing examples that don't overlap the matched set at all, so the
+    # list-comprehension filter empties it and the fallback re-fills it.
+    catalog["fields"]["model"]["examples"] = ["not-a-real-model-id"]
+    filtered = filter_catalog_by_languages(catalog, "hi")
+    assert filtered is not None
+    assert filtered["fields"]["model"]["examples"]
+    assert "not-a-real-model-id" not in filtered["fields"]["model"]["examples"]
+
+
+def test_configuration_defaults_unregistered_default_provider(monkeypatch):
+    from apps.providers import schema as schema_mod
+
+    monkeypatch.setitem(schema_mod.DEFAULT_SERVICE_PROVIDERS, "stt", "not-a-provider")
+    with pytest.raises(ValueError, match="is not a registered provider"):
+        schema_mod.configuration_defaults()
+
+
+def test_all_provider_auth_shape():
+    from apps.providers.schema import all_provider_auth
+
+    auth = all_provider_auth()
+    assert set(auth) == {"stt", "tts", "llm"}
+    assert "deepgram" in auth["stt"]
+
+
+def test_merge_auth_catalogs_rejects_empty():
+    from apps.providers.schema import merge_auth_catalogs
+
+    with pytest.raises(ValueError, match="by_kind must not be empty"):
+        merge_auth_catalogs({})
+
+
+def test_merge_auth_catalogs_extra_kind_appended():
+    from apps.providers.schema import merge_auth_catalogs
+
+    by_kind = {
+        "custom_kind": {
+            "provider": "x",
+            "name": "X",
+            "fields": {"api_key": {"type": "string"}},
+            "secrets": [],
+        },
+    }
+    merged = merge_auth_catalogs(by_kind)
+    assert "api_key" in merged["fields"]
+    assert merged["kinds"] == ["custom_kind"]

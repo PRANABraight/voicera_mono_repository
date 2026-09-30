@@ -113,6 +113,21 @@ def test_resolve_backend_and_paths():
         resolve_completions_path(VISTAAR_PROD_MODEL)
 
 
+def test_resolve_backend_unknown_model():
+    with pytest.raises(ValueError, match="Unknown Kenpath model"):
+        resolve_backend("unknown-model")
+
+
+def test_resolve_languages_unknown_model():
+    with pytest.raises(ValueError, match="Unknown Kenpath model"):
+        resolve_languages("unknown-model")
+
+
+def test_resolve_auth_secret_unknown_model():
+    with pytest.raises(ValueError, match="Unknown Kenpath model"):
+        resolve_auth_secret("unknown-model")
+
+
 def test_resolve_auth_secret():
     assert resolve_auth_secret(VISTAAR_PROD_MODEL) == VISTAAR_AUTH_SECRET
     assert resolve_auth_secret(VISTAAR_DEV_MODEL) == "private_key"
@@ -138,6 +153,14 @@ def test_voice_bhili_urls_are_catalogued_per_model():
 
 def test_yield_word_chunks_from_text():
     assert list(yield_word_chunks_from_text("hello world")) == ["hello ", "world"]
+
+
+def test_yield_word_chunks_from_text_newline_only():
+    assert list(yield_word_chunks_from_text("hello\nworld")) == ["hello ", "world"]
+
+
+def test_yield_word_chunks_from_text_mixed_space_and_newline():
+    assert list(yield_word_chunks_from_text("a b\nc")) == ["a ", "b ", "c"]
 
 
 def test_extract_last_user_message():
@@ -518,6 +541,15 @@ async def test_voice_bhili_non_200_raises(monkeypatch):
             pass
 
 
+def test_set_call_ending_controller_replaces_processor(service: KenpathLLMService):
+    original_processor = service._call_ending_processor
+    new_controller = KenpathCallEndingController()
+    service.set_call_ending_controller(new_controller)
+    assert service._call_ending_controller is new_controller
+    assert service._call_ending_processor is not original_processor
+    assert service.pipeline_processors_after_output() == [service._call_ending_processor]
+
+
 def test_response_requests_end_call():
     assert response_requests_end_call("goodbye") is True
     assert response_requests_end_call("Goodbye") is True
@@ -529,6 +561,7 @@ def test_response_requests_end_call():
 
 
 def test_strip_goodbye_for_tts():
+    assert strip_goodbye_for_tts("") == ""
     assert strip_goodbye_for_tts("goodbye") == ""
     assert strip_goodbye_for_tts("goodbye ") == ""
     assert strip_goodbye_for_tts("Goodbye") == ""
@@ -776,3 +809,565 @@ async def test_bharat_end_interaction_defers_end_worker(monkeypatch):
     assert any(isinstance(f, LLMFullResponseEndFrame) for f in pushed)
     assert not any(isinstance(f, EndWorkerFrame) for f in pushed)
     assert service.pipeline_processors_after_output()
+
+
+# --- Additional bharat_vistaar_llm.py branch coverage ---
+
+
+def test_parse_bharat_vistaar_voice_delta_empty_text():
+    assert parse_bharat_vistaar_voice_delta("") == ("", False)
+    assert parse_bharat_vistaar_voice_delta("   ") == ("", False)
+
+
+def test_parse_bharat_vistaar_voice_delta_invalid_json():
+    assert parse_bharat_vistaar_voice_delta("{not valid json") == (
+        "{not valid json",
+        False,
+    )
+
+
+def test_parse_bharat_vistaar_voice_delta_non_dict_json():
+    assert parse_bharat_vistaar_voice_delta("[1, 2, 3]") == ("[1, 2, 3]", False)
+
+
+def test_bharat_vistaar_audio_suffix_empty_audio_text():
+    assert bharat_vistaar_audio_suffix("", "previous") == ("", "previous")
+
+
+def test_bharat_vistaar_audio_suffix_reset_mid_stream():
+    # New audio_text neither starts with nor equals last_audio: a stream reset.
+    text, last = bharat_vistaar_audio_suffix("brand new sentence", "old prefix")
+    assert text == "brand new sentence"
+    assert last == "brand new sentence"
+
+
+def test_bharat_vistaar_llm_service_requires_private_key():
+    with pytest.raises(ValueError, match="requires private_key"):
+        BharatVistaarLLMService(
+            private_key="  ",
+            base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+            completions_path=BHARAT_VISTAAR_DEV_PATH,
+            model=BHARAT_VISTAAR_DEV_MODEL,
+        )
+
+
+def test_bharat_vistaar_llm_service_requires_completions_path():
+    with pytest.raises(ValueError, match="requires completions_path"):
+        BharatVistaarLLMService(
+            private_key=_TEST_PRIVATE_KEY,
+            base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+            completions_path="   ",
+            model=BHARAT_VISTAAR_DEV_MODEL,
+        )
+
+
+def test_bharat_vistaar_llm_service_can_generate_metrics():
+    service = BharatVistaarLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+        completions_path=BHARAT_VISTAAR_DEV_PATH,
+        model=BHARAT_VISTAAR_DEV_MODEL,
+    )
+    assert service.can_generate_metrics() is True
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_get_client_creates_when_absent():
+    service = BharatVistaarLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+        completions_path=BHARAT_VISTAAR_DEV_PATH,
+        model=BHARAT_VISTAAR_DEV_MODEL,
+    )
+    assert service._client is None
+    client = await service._get_client()
+    assert client is not None
+    assert service._client is client
+    await service.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_cleanup_closes_open_client():
+    service = BharatVistaarLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+        completions_path=BHARAT_VISTAAR_DEV_PATH,
+        model=BHARAT_VISTAAR_DEV_MODEL,
+    )
+    await service._get_client()
+    await service.cleanup()
+    assert service._client is None
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_cleanup_noop_without_client():
+    service = BharatVistaarLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+        completions_path=BHARAT_VISTAAR_DEV_PATH,
+        model=BHARAT_VISTAAR_DEV_MODEL,
+    )
+    await service.cleanup()
+    assert service._client is None
+
+
+def _bharat_service(monkeypatch) -> BharatVistaarLLMService:
+    monkeypatch.setattr(jwt, "encode", lambda *args, **kwargs: "bharat-token")
+    return BharatVistaarLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+        completions_path=BHARAT_VISTAAR_DEV_PATH,
+        model=BHARAT_VISTAAR_DEV_MODEL,
+        source_lang="hi",
+    )
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_process_frame_passes_through_non_context_frame(
+    monkeypatch,
+):
+    service = _bharat_service(monkeypatch)
+    pushed: list = []
+
+    async def capture(frame, direction=FrameDirection.DOWNSTREAM):
+        pushed.append(frame)
+
+    service.push_frame = capture  # type: ignore[method-assign]
+
+    other_frame = BotStoppedSpeakingFrame()
+    await service.process_frame(other_frame, FrameDirection.DOWNSTREAM)
+    assert other_frame in pushed
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_process_frame_timeout_calls_handler(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    pushed: list = []
+
+    async def capture(frame, direction=FrameDirection.DOWNSTREAM):
+        pushed.append(frame)
+
+    service.push_frame = capture  # type: ignore[method-assign]
+    service.start_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+    service.stop_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+
+    handled = []
+
+    async def fake_handler(name):
+        handled.append(name)
+
+    service._call_event_handler = fake_handler  # type: ignore[method-assign]
+
+    import httpx as httpx_mod
+
+    async def raise_timeout(context):
+        raise httpx_mod.TimeoutException("timed out")
+
+    service._process_context = raise_timeout  # type: ignore[method-assign]
+
+    errors = []
+
+    async def capture_error(error_msg, exception=None):
+        errors.append(error_msg)
+
+    service.push_error = capture_error  # type: ignore[method-assign]
+
+    context = LLMContext(messages=[{"role": "user", "content": "hi"}])
+    await service.process_frame(LLMContextFrame(context=context), FrameDirection.DOWNSTREAM)
+
+    assert handled == ["on_completion_timeout"]
+    assert any("timeout" in e.lower() for e in errors)
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_process_frame_generic_error(monkeypatch):
+    service = _bharat_service(monkeypatch)
+
+    async def capture(frame, direction=FrameDirection.DOWNSTREAM):
+        pass
+
+    service.push_frame = capture  # type: ignore[method-assign]
+    service.start_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+    service.stop_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+
+    async def raise_error(context):
+        raise RuntimeError("boom")
+
+    service._process_context = raise_error  # type: ignore[method-assign]
+
+    errors = []
+
+    async def capture_error(error_msg, exception=None):
+        errors.append(error_msg)
+
+    service.push_error = capture_error  # type: ignore[method-assign]
+
+    context = LLMContext(messages=[{"role": "user", "content": "hi"}])
+    await service.process_frame(LLMContextFrame(context=context), FrameDirection.DOWNSTREAM)
+
+    assert any("boom" in e for e in errors)
+
+
+@pytest.mark.asyncio
+async def test_bharat_vistaar_process_context_no_user_message(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    service.start_ttfb_metrics = AsyncMock()  # type: ignore[method-assign]
+
+    context = LLMContext(messages=[{"role": "system", "content": "you are helpful"}])
+    text, end_interaction = await service._process_context(context)
+    assert text == ""
+    assert end_interaction is False
+
+
+def _sse_stream_client(sse_bytes: bytes) -> MagicMock:
+    stream_cm = AsyncMock()
+    response = AsyncMock()
+    response.status_code = 200
+
+    async def aiter_bytes():
+        yield sse_bytes
+
+    response.aiter_bytes = aiter_bytes
+    stream_cm.__aenter__.return_value = response
+    stream_cm.__aexit__.return_value = None
+
+    mock_client = MagicMock()
+    mock_client.is_closed = False
+    mock_client.stream.return_value = stream_cm
+    return mock_client
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_skips_non_data_lines_and_bad_json(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    sse = (
+        b"event: ping\n"
+        b"data: not-json-at-all\n"
+        b'data: {"choices":[]}\n'
+        b'data: {"choices":[{"delta":{"content":null}}]}\n'
+        b"data: [DONE]\n"
+    )
+    service._client = _sse_stream_client(sse)
+
+    chunks = [c async for c in service._stream_chat([{"role": "user", "content": "hi"}])]
+    assert chunks == []
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_skips_duplicate_audio_and_splits_on_newline(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    delta1 = json.dumps({"audio": "hello", "end_interaction": False})
+    # Same audio_text repeated: bharat_vistaar_audio_suffix returns "" -> skipped.
+    delta_dup = json.dumps({"audio": "hello", "end_interaction": False})
+    # Empty audio field: parse_bharat_vistaar_voice_delta yields "" -> also skipped.
+    delta_empty = json.dumps({"audio": "", "end_interaction": False})
+    delta2 = json.dumps({"audio": "hello\nworld", "end_interaction": False})
+    sse = (
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta1)}}}}}]}}\n'
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta_dup)}}}}}]}}\n'
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta_empty)}}}}}]}}\n'
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta2)}}}}}]}}\n'
+        "data: [DONE]\n"
+    ).encode("utf-8")
+    service._client = _sse_stream_client(sse)
+
+    chunks = [c async for c in service._stream_chat([{"role": "user", "content": "hi"}])]
+    assert "".join(chunks).strip() == "hello world"
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_word_split_space_only_and_mixed(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    # "a b" -> space-only split (no newline in buffer).
+    delta1 = json.dumps({"audio": "a b", "end_interaction": False})
+    # Extends with a newline-and-space mix so both split_idx branches run.
+    delta2 = json.dumps({"audio": "a b\nc d", "end_interaction": False})
+    sse = (
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta1)}}}}}]}}\n'
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta2)}}}}}]}}\n'
+        "data: [DONE]\n"
+    ).encode("utf-8")
+    service._client = _sse_stream_client(sse)
+
+    chunks = [c async for c in service._stream_chat([{"role": "user", "content": "hi"}])]
+    assert "".join(chunks).replace(" ", "").replace("\n", "") == "abcd"
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_flushes_trailing_buffer_without_done(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    delta = json.dumps({"audio": "trailing text", "end_interaction": False})
+    # No "[DONE]" sentinel: the stream just ends.
+    sse = f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta)}}}}}]}}\n'.encode(
+        "utf-8"
+    )
+    service._client = _sse_stream_client(sse)
+
+    chunks = [c async for c in service._stream_chat([{"role": "user", "content": "hi"}])]
+    assert "".join(chunks) == "trailing text"
+
+
+@pytest.mark.asyncio
+async def test_run_inference_returns_joined_text(monkeypatch):
+    service = _bharat_service(monkeypatch)
+    delta = json.dumps({"audio": "answer", "end_interaction": False})
+    sse = (
+        f'data: {{"choices":[{{"delta":{{"content":{json.dumps(delta)}}}}}]}}\n'
+        "data: [DONE]\n"
+    ).encode("utf-8")
+    service._client = _sse_stream_client(sse)
+
+    context = LLMContext(messages=[{"role": "user", "content": "hi"}])
+    result = await service.run_inference(context)
+    assert result == "answer"
+
+
+@pytest.mark.asyncio
+async def test_run_inference_returns_none_without_user_message():
+    service = BharatVistaarLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        base_url=DEFAULT_BHARAT_VISTAAR_DEV_URL,
+        completions_path=BHARAT_VISTAAR_DEV_PATH,
+        model=BHARAT_VISTAAR_DEV_MODEL,
+    )
+    context = LLMContext(messages=[{"role": "system", "content": "only system"}])
+    result = await service.run_inference(context)
+    assert result is None
+
+
+# --- Additional kenpath/llm.py (KenpathLLMService) branch coverage ---
+
+
+def test_kenpath_llm_service_requires_private_key():
+    with pytest.raises(ValueError, match="requires private_key"):
+        KenpathLLMService(
+            private_key="  ",
+            jwt_sub="+91-9000000000",
+            base_url="https://vistaar-dev.mahapocra.gov.in",
+            model=VISTAAR_DEV_MODEL,
+        )
+
+
+def test_kenpath_llm_service_voice_bhili_requires_url():
+    with pytest.raises(ValueError, match="requires voice_bhili_url"):
+        KenpathLLMService(
+            private_key=_TEST_PRIVATE_KEY,
+            jwt_sub="+91-9000000000",
+            base_url="https://vistaar-dev.mahapocra.gov.in",
+            model=VISTAAR_DEV_MODEL,
+            source_lang="bhb",
+            target_lang="bhb",
+            voice_bhili_url="",
+        )
+
+
+def test_kenpath_llm_service_can_generate_metrics(service: KenpathLLMService):
+    assert service.can_generate_metrics() is True
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_get_client_creates_when_absent(service: KenpathLLMService):
+    assert service._client is None
+    client = await service._get_client()
+    assert client is not None
+    assert service._client is client
+    await service.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_cleanup_closes_open_client(service: KenpathLLMService):
+    await service._get_client()
+    await service.cleanup()
+    assert service._client is None
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_cleanup_noop_without_client(service: KenpathLLMService):
+    await service.cleanup()
+    assert service._client is None
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_process_frame_passes_through_non_context_frame(
+    service: KenpathLLMService,
+):
+    pushed: list = []
+
+    async def capture(frame, direction=FrameDirection.DOWNSTREAM):
+        pushed.append(frame)
+
+    service.push_frame = capture  # type: ignore[method-assign]
+    other_frame = BotStoppedSpeakingFrame()
+    await service.process_frame(other_frame, FrameDirection.DOWNSTREAM)
+    assert other_frame in pushed
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_process_frame_timeout_calls_handler(
+    service: KenpathLLMService,
+):
+    async def capture(frame, direction=FrameDirection.DOWNSTREAM):
+        pass
+
+    service.push_frame = capture  # type: ignore[method-assign]
+    service.start_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+    service.stop_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+
+    handled = []
+
+    async def fake_handler(name):
+        handled.append(name)
+
+    service._call_event_handler = fake_handler  # type: ignore[method-assign]
+
+    import httpx as httpx_mod
+
+    async def raise_timeout(context):
+        raise httpx_mod.TimeoutException("timed out")
+
+    service._process_context = raise_timeout  # type: ignore[method-assign]
+
+    errors = []
+
+    async def capture_error(error_msg, exception=None):
+        errors.append(error_msg)
+
+    service.push_error = capture_error  # type: ignore[method-assign]
+
+    context = LLMContext(messages=[{"role": "user", "content": "hi"}])
+    await service.process_frame(LLMContextFrame(context=context), FrameDirection.DOWNSTREAM)
+
+    assert handled == ["on_completion_timeout"]
+    assert any("timeout" in e.lower() for e in errors)
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_process_frame_generic_error(service: KenpathLLMService):
+    async def capture(frame, direction=FrameDirection.DOWNSTREAM):
+        pass
+
+    service.push_frame = capture  # type: ignore[method-assign]
+    service.start_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+    service.stop_processing_metrics = AsyncMock()  # type: ignore[method-assign]
+
+    async def raise_error(context):
+        raise RuntimeError("boom")
+
+    service._process_context = raise_error  # type: ignore[method-assign]
+
+    errors = []
+
+    async def capture_error(error_msg, exception=None):
+        errors.append(error_msg)
+
+    service.push_error = capture_error  # type: ignore[method-assign]
+
+    context = LLMContext(messages=[{"role": "user", "content": "hi"}])
+    await service.process_frame(LLMContextFrame(context=context), FrameDirection.DOWNSTREAM)
+    assert any("boom" in e for e in errors)
+
+
+@pytest.mark.asyncio
+async def test_kenpath_llm_process_context_no_user_message(service: KenpathLLMService):
+    service.start_ttfb_metrics = AsyncMock()  # type: ignore[method-assign]
+    context = LLMContext(messages=[{"role": "system", "content": "you are helpful"}])
+    text = await service._process_context(context)
+    assert text == ""
+
+
+@pytest.mark.asyncio
+async def test_voice_bhili_empty_response_returns_nothing(monkeypatch):
+    monkeypatch.setattr(jwt, "encode", lambda *args, **kwargs: "signed-token")
+    service = KenpathLLMService(
+        private_key=_TEST_PRIVATE_KEY,
+        jwt_sub="+91-9000000000",
+        base_url="https://vistaar-dev.mahapocra.gov.in",
+        voice_bhili_url=DEFAULT_VOICE_BHILI_DEV_URL,
+        model=VISTAAR_DEV_MODEL,
+        source_lang="bhb",
+        target_lang="bhb",
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"response": "   "}
+
+    mock_client = MagicMock()
+    mock_client.is_closed = False
+    mock_client.get = AsyncMock(return_value=mock_response)
+    service._client = mock_client
+
+    chunks = [chunk async for chunk in service._iter_voice_bhili_text("test")]
+    assert chunks == []
+
+
+def _vistaar_stream_client(text_bytes: bytes) -> MagicMock:
+    stream_cm = AsyncMock()
+    response = AsyncMock()
+    response.status_code = 200
+
+    async def aiter_bytes():
+        yield text_bytes
+
+    response.aiter_bytes = aiter_bytes
+    stream_cm.__aenter__.return_value = response
+    stream_cm.__aexit__.return_value = None
+
+    mock_client = MagicMock()
+    mock_client.is_closed = False
+    mock_client.stream.return_value = stream_cm
+    return mock_client
+
+
+@pytest.mark.asyncio
+async def test_stream_vistaar_completions_word_split_branches(
+    service: KenpathLLMService, monkeypatch
+):
+    monkeypatch.setattr(jwt, "encode", lambda *args, **kwargs: "signed-token")
+    service._client = _vistaar_stream_client(b"a b\nc d")
+
+    chunks = [chunk async for chunk in service._stream_vistaar_completions("hi")]
+    assert "".join(chunks).replace(" ", "").replace("\n", "") == "abcd"
+
+
+@pytest.mark.asyncio
+async def test_stream_vistaar_completions_newline_only_split(
+    service: KenpathLLMService, monkeypatch
+):
+    monkeypatch.setattr(jwt, "encode", lambda *args, **kwargs: "signed-token")
+    service._client = _vistaar_stream_client(b"hello\nworld")
+
+    chunks = [chunk async for chunk in service._stream_vistaar_completions("hi")]
+    assert "".join(chunks).replace(" ", "").replace("\n", "") == "helloworld"
+
+
+@pytest.mark.asyncio
+async def test_stream_vistaar_completions_space_only_split(
+    service: KenpathLLMService, monkeypatch
+):
+    monkeypatch.setattr(jwt, "encode", lambda *args, **kwargs: "signed-token")
+    service._client = _vistaar_stream_client(b"hello world")
+
+    chunks = [chunk async for chunk in service._stream_vistaar_completions("hi")]
+    assert "".join(chunks).replace(" ", "") == "helloworld"
+
+
+@pytest.mark.asyncio
+async def test_run_inference_vistaar_returns_joined_text(
+    service: KenpathLLMService, monkeypatch
+):
+    monkeypatch.setattr(jwt, "encode", lambda *args, **kwargs: "signed-token")
+    service._client = _vistaar_stream_client(b"answer")
+
+    context = LLMContext(messages=[{"role": "user", "content": "hi"}])
+    result = await service.run_inference(context)
+    assert result == "answer"
+
+
+@pytest.mark.asyncio
+async def test_run_inference_vistaar_returns_none_without_user_message(
+    service: KenpathLLMService,
+):
+    context = LLMContext(messages=[{"role": "system", "content": "only system"}])
+    result = await service.run_inference(context)
+    assert result is None
