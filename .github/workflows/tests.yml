@@ -54,9 +54,8 @@ jobs:
       requirements-files: apps/api/requirements.txt
       test-path: apps/api/tests
       cov-source: apps/api/app
-      # Baseline measured locally on 2026-09-25 (~52%). Ratchet toward 95 as
-      # tests are added — see CI plan doc.
-      cov-fail-under: 50
+      # Raised from ~52% to ~72% on 2026-09-30 (Phase 1 coverage work). Ratchet toward 95.
+      cov-fail-under: 70
 
   runtime-tests:
     needs: changes
@@ -68,8 +67,9 @@ jobs:
       requirements-files: apps/runtime/requirements.txt
       test-path: apps/runtime/tests
       cov-source: apps/runtime
-      # Baseline measured locally on 2026-09-25 (~48%). Ratchet toward 95.
-      cov-fail-under: 47
+      # Raised from ~48% to ~92% on 2026-09-30 (Phase 2 coverage work, incl. full
+      # real-object pipecat/* harnesses). Ratchet toward 95.
+      cov-fail-under: 90
 
   providers-tests:
     needs: changes
@@ -81,8 +81,8 @@ jobs:
       requirements-files: apps/api/requirements.txt apps/runtime/requirements.txt
       test-path: apps/providers/tests
       cov-source: apps/providers
-      # Baseline measured locally on 2026-09-25 (~53%). Ratchet toward 95.
-      cov-fail-under: 52
+      # Raised from ~53% to ~97% on 2026-09-30 (Phase 3 coverage work) — target met.
+      cov-fail-under: 95
 
   telephony-tests:
     needs: changes
@@ -94,8 +94,8 @@ jobs:
       requirements-files: apps/api/requirements.txt apps/runtime/requirements.txt
       test-path: apps/telephony/tests
       cov-source: apps/telephony
-      # Baseline measured locally on 2026-09-25 (~90%), closest to target already.
-      cov-fail-under: 89
+      # Raised from ~90% to ~99% on 2026-09-30 (Phase 3 coverage work) — target exceeded.
+      cov-fail-under: 97
 
   model-server-tests:
     needs: changes
@@ -111,8 +111,8 @@ jobs:
       # rest of the model stack); llm/stt/tts source trees need real GPU
       # models and are out of scope for hosted-runner CI.
       cov-source: gateway/app
-      # Baseline measured locally on 2026-09-25 (~86%), closest to target already.
-      cov-fail-under: 85
+      # Raised from ~86% to ~99% on 2026-09-30 (Phase 4 coverage work) — target exceeded.
+      cov-fail-under: 97
       # These two files exercise stt/indic-conformer's realtime server, whose
       # requirements.txt pins onnxruntime-gpu (GPU-only wheel, no CI runner
       # coverage) — same "needs real GPU stack" bucket as bench/smoke_gpu.py.

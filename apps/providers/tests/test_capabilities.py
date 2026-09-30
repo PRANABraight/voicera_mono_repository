@@ -75,6 +75,73 @@ def test_settings_tree_rekeys_to_canonical():
     assert languages_map(caps)["bulbul:v2"]["hi-IN"] == "hi"
 
 
+def test_normalize_rejects_non_mapping_capabilities():
+    with pytest.raises(TypeError, match="must be a mapping"):
+        normalize_capabilities(["not", "a", "mapping"])  # type: ignore[arg-type]
+
+
+def test_normalize_rejects_invalid_model_key():
+    with pytest.raises(ValueError, match="model key must be a non-empty str"):
+        normalize_capabilities({"": {"languages": {"en": "en"}, "settings": {"en": {}}}})
+
+
+def test_normalize_rejects_non_mapping_entry():
+    with pytest.raises(TypeError, match=r"capabilities\['m'\] must be a mapping"):
+        normalize_capabilities({"m": "not-a-mapping"})  # type: ignore[dict-item]
+
+
+def test_normalize_requires_languages_and_settings_keys():
+    with pytest.raises(ValueError, match="must have 'languages' and 'settings'"):
+        normalize_capabilities({"m": {"languages": {"en": "en"}}})
+
+
+def test_normalize_rejects_empty_languages_map():
+    with pytest.raises(ValueError, match="languages must be a non-empty mapping"):
+        normalize_capabilities({"m": {"languages": {}, "settings": {}}})
+
+
+def test_normalize_rejects_non_mapping_settings():
+    with pytest.raises(TypeError, match=r"settings must be a mapping"):
+        normalize_capabilities(
+            {"m": {"languages": {"en": "en"}, "settings": "not-a-mapping"}}
+        )
+
+
+def test_normalize_rejects_invalid_vendor_code():
+    with pytest.raises(ValueError, match="must be a non-empty str"):
+        normalize_capabilities(
+            {"m": {"languages": {"": "en"}, "settings": {}}}
+        )
+
+
+def test_normalize_rejects_star_in_languages():
+    with pytest.raises(ValueError, match="languages must not use"):
+        normalize_capabilities(
+            {"m": {"languages": {"*": "en"}, "settings": {}}}
+        )
+
+
+def test_normalize_rejects_invalid_canonical_id():
+    with pytest.raises(ValueError, match="canonical id for"):
+        normalize_capabilities(
+            {"m": {"languages": {"en": ""}, "settings": {}}}
+        )
+
+
+def test_normalize_rejects_settings_key_not_in_languages():
+    with pytest.raises(ValueError, match="is not in languages"):
+        normalize_capabilities(
+            {"m": {"languages": {"en": "en"}, "settings": {"hi": {}}}}
+        )
+
+
+def test_normalize_rejects_non_mapping_settings_meta():
+    with pytest.raises(TypeError, match="must be a mapping"):
+        normalize_capabilities(
+            {"m": {"languages": {"en": "en"}, "settings": {"en": "not-a-mapping"}}}
+        )
+
+
 def test_api_capabilities_uses_canonical_language_keys():
     from apps.providers.capabilities import api_capabilities
 
