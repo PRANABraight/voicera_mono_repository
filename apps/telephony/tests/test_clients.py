@@ -376,6 +376,155 @@ async def test_initiate_outbound_dispatcher(monkeypatch: pytest.MonkeyPatch):
     assert result["call_uuid"] == "via-dispatch"
 
 
+# --- Error branches for thin wrapper methods (delete/update/link/unlink/list) ---
+
+
+@pytest.mark.anyio
+async def test_vobiz_application_error_branches(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="server error")
+
+    _patch_client(monkeypatch, handler)
+    client = VobizClient("authid", "token", VOBIZ_BASE)
+
+    assert (await client.delete_application("app-1"))["status"] == "fail"
+    assert (await client.update_application_name("app-1", "new"))["status"] == "fail"
+    assert (await client.link_number("+1555", "app-1"))["status"] == "fail"
+    assert (await client.unlink_number("+1555"))["status"] == "fail"
+    listed = await client.list_numbers()
+    assert listed["status"] == "fail"
+    assert listed["numbers"] == []
+
+
+@pytest.mark.anyio
+async def test_vobiz_account_url_lower_empty_part_and_trailing_slash(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    client = VobizClient("authid", "token", VOBIZ_BASE)
+    # Empty-string parts are skipped; a trailing-slash part is preserved.
+    url = client.account_url_lower("", "numbers/")
+    assert url == f"{VOBIZ_BASE}/account/authid/numbers/"
+
+
+@pytest.mark.anyio
+async def test_vobiz_account_url_empty_part(monkeypatch: pytest.MonkeyPatch):
+    client = VobizClient("authid", "token", VOBIZ_BASE)
+    url = client.account_url("", "Application/")
+    assert url == f"{VOBIZ_BASE}/Account/authid/Application/"
+
+
+@pytest.mark.anyio
+async def test_vobiz_client_direct_recording_wrappers(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if "/Recording/rec-1/" in path:
+            return _json_response({"recording_url": "https://cdn.example.com/rec-1.mp3"})
+        if "cdn.example.com" in str(request.url):
+            return _bytes_response(b"audio-bytes")
+        return httpx.Response(404, text="not found")
+
+    _patch_client(monkeypatch, handler)
+    client = VobizClient("authid", "token", VOBIZ_BASE)
+    metadata = await client.fetch_recording_metadata("rec-1")
+    assert metadata["recording_url"] == "https://cdn.example.com/rec-1.mp3"
+    audio = await client.download_recording("https://cdn.example.com/rec-1.mp3")
+    assert audio == b"audio-bytes"
+
+
+@pytest.mark.anyio
+async def test_vobiz_recording_never_ready_returns_none(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="server error")
+
+    _patch_client(monkeypatch, handler)
+    client = VobizClient("authid", "token", VOBIZ_BASE)
+    audio = await client.wait_and_download_recording(
+        "rec-1", max_attempts=2, interval_secs=0.01
+    )
+    assert audio is None
+
+
+@pytest.mark.anyio
+async def test_plivo_application_error_branches(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="server error")
+
+    _patch_client(monkeypatch, handler)
+    client = PlivoClient("authid", "token", PLIVO_BASE)
+
+    assert (await client.create_application("agent", "https://example.com"))[
+        "status"
+    ] == "fail"
+    assert (await client.delete_application("app-1"))["status"] == "fail"
+    assert (await client.update_application_name("app-1", "new"))["status"] == "fail"
+    assert (await client.link_number("+1555", "app-1"))["status"] == "fail"
+    assert (await client.unlink_number("+1555"))["status"] == "fail"
+    listed = await client.list_numbers()
+    assert listed["status"] == "fail"
+    assert listed["numbers"] == []
+    call_result = await client.initiate_call(
+        from_number="1", to_number="2", answer_url="https://example.com"
+    )
+    assert call_result["status"] == "fail"
+
+
+@pytest.mark.anyio
+async def test_plivo_account_url_empty_part(monkeypatch: pytest.MonkeyPatch):
+    client = PlivoClient("authid", "token", PLIVO_BASE)
+    url = client.account_url("", "Application/")
+    assert url == f"{PLIVO_BASE}/Account/authid/Application/"
+
+
+@pytest.mark.anyio
+async def test_plivo_client_direct_recording_wrappers(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if "/Recording/rec-1/" in path:
+            return _json_response(
+                {"recording_url": "https://media.plivo.com/rec-1.mp3"}
+            )
+        if path.endswith("/Recording/"):
+            return _json_response({"objects": []})
+        if "media.plivo.com" in str(request.url):
+            return _bytes_response(b"plivo-bytes")
+        return httpx.Response(404, text="not found")
+
+    _patch_client(monkeypatch, handler)
+    client = PlivoClient("authid", "token", PLIVO_BASE)
+    metadata = await client.fetch_recording_metadata("rec-1")
+    assert metadata["recording_url"] == "https://media.plivo.com/rec-1.mp3"
+    listed = await client.list_recordings_for_call("call-1")
+    assert listed is None
+    audio = await client.download_recording("https://media.plivo.com/rec-1.mp3")
+    assert audio == b"plivo-bytes"
+
+
+@pytest.mark.anyio
+async def test_plivo_recording_never_ready_returns_none(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        # Metadata fetch succeeds but never carries a usable recording_url.
+        return _json_response({"recording_uuid": "rec-plivo"})
+
+    _patch_client(monkeypatch, handler)
+    client = PlivoClient("authid", "token", PLIVO_BASE)
+    audio = await client.wait_and_download_recording(
+        recording_id="rec-plivo", max_attempts=2, interval_secs=0.01
+    )
+    assert audio is None
+
+
+@pytest.mark.anyio
+async def test_plivo_recording_metadata_and_list_errors(monkeypatch: pytest.MonkeyPatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="server error")
+
+    _patch_client(monkeypatch, handler)
+    client = PlivoClient("authid", "token", PLIVO_BASE)
+    assert await client.fetch_recording_metadata("rec-1") is None
+    assert await client.list_recordings_for_call("call-1") is None
+    assert await client.start_call_recording("call-1", 60) is None
+
+
 @pytest.mark.anyio
 async def test_vobiz_initiate_call_http_error(monkeypatch: pytest.MonkeyPatch):
     def handler(request: httpx.Request) -> httpx.Response:

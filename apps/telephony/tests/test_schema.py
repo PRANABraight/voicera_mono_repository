@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from enum import Enum
+from typing import Literal, Optional, Union
+
 import pytest
+from pydantic import BaseModel, Field
 
 from apps.telephony import (
     Kind,
@@ -123,3 +127,135 @@ def test_telephony_settings_and_auth_split():
 
     with pytest.raises(UnknownProviderError):
         provider_auth("twilio")
+
+
+def test_all_provider_auth_shape():
+    from apps.telephony.schema import all_provider_auth
+
+    auth = all_provider_auth()
+    assert set(auth) == {"telephony"}
+    assert set(auth["telephony"]) == {"vobiz", "plivo"}
+
+
+def test_provider_level_auth_known_and_unknown():
+    from apps.telephony.schema import provider_level_auth
+
+    known = provider_level_auth("vobiz")
+    assert known is not None
+    assert known["kinds"] == ["telephony"]
+    assert known["provider"] == "vobiz"
+
+    assert provider_level_auth("twilio") is None
+
+
+def test_all_provider_level_auth_shape():
+    from apps.telephony.schema import all_provider_level_auth
+
+    everyone = all_provider_level_auth()
+    assert set(everyone) == {"vobiz", "plivo"}
+    assert everyone["vobiz"]["kinds"] == ["telephony"]
+
+
+def test_configuration_telephony_unregistered_default_provider(monkeypatch):
+    from apps.telephony import schema as schema_mod
+
+    monkeypatch.setitem(schema_mod.DEFAULT_SERVICE_PROVIDERS, "telephony", "twilio")
+    with pytest.raises(ValueError, match="is not a registered provider"):
+        schema_mod.configuration_telephony()
+
+
+# --- Private helper edge cases exercised directly (mirrors apps.providers style) ---
+
+
+def test_provider_id_missing_field_raises():
+    from apps.telephony.schema import _provider_id
+
+    class NoProviderField(BaseModel):
+        name: str = "x"
+
+    with pytest.raises(ValueError, match="has no 'provider' field"):
+        _provider_id(NoProviderField)
+
+
+def test_provider_id_no_default_raises():
+    from apps.telephony.schema import _provider_id
+
+    class NoDefaultProvider(BaseModel):
+        provider: str
+
+    with pytest.raises(ValueError, match="has no default discriminator value"):
+        _provider_id(NoDefaultProvider)
+
+
+def test_display_name_missing_field_raises():
+    from apps.telephony.schema import _display_name
+
+    class NoNameField(BaseModel):
+        provider: str = "x"
+
+    with pytest.raises(ValueError, match="has no 'name' field"):
+        _display_name(NoNameField)
+
+
+def test_display_name_no_default_raises():
+    from apps.telephony.schema import _display_name
+
+    class NoDefaultName(BaseModel):
+        name: str
+
+    with pytest.raises(ValueError, match="has no default display value"):
+        _display_name(NoDefaultName)
+
+
+def test_type_label_edge_cases():
+    from apps.telephony.schema import _type_label
+
+    assert _type_label(None) == "any"
+    assert _type_label(Literal["a", "b"]) == "string"
+    assert _type_label(Union[str, int]) == "string | integer"
+    assert _type_label(list[int]) == "list[integer]"
+    assert _type_label(dict[str, int]) == "dict"
+    assert _type_label(type(None)) == "null"
+
+    class Weird:
+        pass
+
+    instance = Weird()
+    assert _type_label(instance) == str(instance)
+
+
+def test_field_catalog_no_examples_input_mode():
+    from apps.telephony.schema import _config_catalog
+
+    class PlainEnum(Enum):
+        FOO = "foo"
+
+    class Plain(BaseModel):
+        model_config = {"arbitrary_types_allowed": True}
+
+        provider: str = "plain"
+        name: str = "Plain"
+        kind_field: PlainEnum = Field(default=PlainEnum.FOO)
+        plain_field: str = Field(default="value")
+        optional_field: Optional[str] = Field(default=None)
+
+    catalog = _config_catalog(Plain)
+    assert catalog["fields"]["plain_field"]["input_mode"] == "input"
+    # Enum default is unwrapped via its `.value` attribute.
+    assert catalog["fields"]["kind_field"]["default"] == "foo"
+    # None default on a non-required field is preserved explicitly.
+    assert catalog["fields"]["optional_field"]["default"] is None
+
+
+def test_field_catalog_examples_without_allow_custom_is_options():
+    from apps.telephony.schema import _config_catalog
+
+    class WithExamples(BaseModel):
+        provider: str = "with_examples"
+        name: str = "WithExamples"
+        choice: str = Field(
+            default="a", json_schema_extra={"examples": ["a", "b"]}
+        )
+
+    catalog = _config_catalog(WithExamples)
+    assert catalog["fields"]["choice"]["input_mode"] == "options"

@@ -89,6 +89,11 @@ def test_merge_webhook_payload_query_params() -> None:
     assert parsed.from_number == "+15551111111"
 
 
+def test_merge_webhook_payload_without_query_params() -> None:
+    merged = merge_webhook_payload({"Event": "StartApp"}, None)
+    assert merged == {"Event": "StartApp"}
+
+
 def test_parse_stream_start() -> None:
     meta = parse_stream_start(
         {
@@ -118,3 +123,34 @@ def test_decode_webhook_body_form_urlencoded() -> None:
     assert parse_webhook_form(parsed).from_number == "+15551234567"
     assert parse_webhook_form(parsed).to_number == "+15559876543"
     assert parse_webhook_form(parsed).provider_call_sid == "uuid-1"
+
+
+def test_decode_webhook_body_empty() -> None:
+    assert decode_webhook_body(b"") == {}
+    assert decode_webhook_body(b"   ") == {}
+
+
+def test_decode_webhook_body_invalid_json_falls_back_to_form() -> None:
+    parsed = decode_webhook_body(b"{not valid json")
+    assert parsed == {}
+
+
+def test_resolve_provider_call_sid_none_matches() -> None:
+    assert resolve_provider_call_sid({"unrelated": "value"}) is None
+
+
+def test_get_nested_short_circuits_on_non_mapping() -> None:
+    # "start" resolves to a non-mapping value, so the nested "callId" lookup
+    # must bail out instead of raising.
+    assert resolve_provider_call_sid({"start": "not-a-mapping"}) is None
+
+
+def test_map_hangup_call_response_user_busy_cause() -> None:
+    assert map_hangup_call_response("completed", "USER_BUSY") == "busy"
+    assert map_hangup_call_response("completed", "BUSY") == "busy"
+
+
+def test_map_hangup_call_response_originator_cancel() -> None:
+    assert map_hangup_call_response("completed", "ORIGINATOR_CANCEL") == "no_answer"
+    assert map_hangup_call_response("completed", "CALL_REJECTED") == "no_answer"
+    assert map_hangup_call_response("completed", "UNALLOCATED_NUMBER") == "no_answer"
