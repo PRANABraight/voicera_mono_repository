@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -80,10 +79,6 @@ def test_stt_list_and_setting_ok():
             assert "hi" in entry["languages"]
 
 
-@pytest.mark.xfail(
-    reason="sarvam capability catalog now only exposes bulbul:v3; test still asserts bulbul:v2 (pre-existing drift, unrelated to CI setup)",
-    strict=False,
-)
 def test_tts_setting_includes_scoped_tree():
     with patch(
         "app.routers.configuration.auth_service.list_configured_providers",
@@ -95,12 +90,12 @@ def test_tts_setting_includes_scoped_tree():
     assert payload["authenticated"] is False
     assert "capabilities" in payload
     caps = payload["capabilities"]
-    assert "bulbul:v2" in caps
-    assert "languages" in caps["bulbul:v2"]
-    assert "settings" in caps["bulbul:v2"]
-    assert "hi" in caps["bulbul:v2"]["languages"]
-    assert "hi" in caps["bulbul:v2"]["settings"]
-    assert "voice" in caps["bulbul:v2"]["settings"]["hi"]
+    assert "bulbul:v3" in caps
+    assert "languages" in caps["bulbul:v3"]
+    assert "settings" in caps["bulbul:v3"]
+    assert "hi" in caps["bulbul:v3"]["languages"]
+    assert "hi" in caps["bulbul:v3"]["settings"]
+    assert "voice" in caps["bulbul:v3"]["settings"]["hi"]
 
 
 def test_llm_and_telephony_authenticated_flag():
